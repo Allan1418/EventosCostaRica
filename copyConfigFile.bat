@@ -1,3 +1,3 @@
 @echo off
 
-copy "connectionstrings.json" "EventosCostaRica.Data\connectionstrings.json"
+copy "connectionstrings.json" "EventosCostaRica.Api\connectionstrings.json"
