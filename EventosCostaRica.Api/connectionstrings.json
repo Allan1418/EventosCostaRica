@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=EventosCR_DB;User Id=sa;Password=1234;TrustServerCertificate=True;"
+  }
+}

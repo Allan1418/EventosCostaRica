@@ -1,0 +1,6 @@
+@EventosCostaRica.Api_HostAddress = http://localhost:5264
+
+GET {{EventosCostaRica.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
