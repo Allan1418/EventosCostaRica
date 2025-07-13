@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventosCostaRica.Data", "Ev
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventosCostaRica.Api", "EventosCostaRica.Api\EventosCostaRica.Api.csproj", "{4C31D16A-D741-47A1-B285-7173B917C4A4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventosCostaRica.Repository", "EventosCostaRica.Repository\EventosCostaRica.Repository.csproj", "{145631B8-EFCF-4760-AB72-4F3190891DCC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventosCostaRica.Business", "EventosCostaRica.Business\EventosCostaRica.Business.csproj", "{353245A7-7580-4186-88CE-8AE6C060AFA0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{4C31D16A-D741-47A1-B285-7173B917C4A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C31D16A-D741-47A1-B285-7173B917C4A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C31D16A-D741-47A1-B285-7173B917C4A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{145631B8-EFCF-4760-AB72-4F3190891DCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{145631B8-EFCF-4760-AB72-4F3190891DCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{145631B8-EFCF-4760-AB72-4F3190891DCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{145631B8-EFCF-4760-AB72-4F3190891DCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{353245A7-7580-4186-88CE-8AE6C060AFA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{353245A7-7580-4186-88CE-8AE6C060AFA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{353245A7-7580-4186-88CE-8AE6C060AFA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{353245A7-7580-4186-88CE-8AE6C060AFA0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

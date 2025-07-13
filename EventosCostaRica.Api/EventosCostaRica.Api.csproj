@@ -17,7 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EventosCostaRica.Business\EventosCostaRica.Business.csproj" />
     <ProjectReference Include="..\EventosCostaRica.Data\EventosCostaRica.Data.csproj" />
+    <ProjectReference Include="..\EventosCostaRica.Repository\EventosCostaRica.Repository.csproj" />
   </ItemGroup>
 
 </Project>
