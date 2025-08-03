@@ -1,6 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+using EventosCostaRica.Business;
+using EventosCostaRica.Business.SeedData;
 using EventosCostaRica.Data;
-
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,24 +12,57 @@ builder.Configuration.AddJsonFile("connectionstrings.json", optional: true, relo
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ContextoDB>(options => options.UseSqlServer(connectionString));
 
-// Add services to the container.
+builder.Services.AddIdentity<Usuario,IdentityRole>()
+    .AddEntityFrameworkStores<ContextoDB>()
+    .AddDefaultTokenProviders();
 
+
+// Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+
+
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Eventos Costa Rica API", Version = "v1" });
+
+    // Configuración para el token JWT (Bearer)
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Ingresa el token JWT de esta manera: Bearer {tu token}",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header
+            },
+            new List<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseHttpsRedirection();
-
+app.UseAuthentication(); // Habilita la autenticación JWT
 app.UseAuthorization();
 
 app.MapControllers();
@@ -34,6 +70,9 @@ app.MapControllers();
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
     try
     {
         using (var scope = app.Services.CreateScope())
@@ -41,6 +80,7 @@ if (app.Environment.IsDevelopment())
             var services = scope.ServiceProvider;
             var context = services.GetRequiredService<ContextoDB>();
 
+            // Lógica de migración y creación de roles
             if (context.Database.CanConnect())
             {
                 Console.WriteLine("MODO DESARROLLO: La base de datos ya existe. ¿Desea reiniciarla? (y/n)");
@@ -65,18 +105,18 @@ if (app.Environment.IsDevelopment())
                 context.Database.Migrate();
                 Console.WriteLine("Base de datos creada con exito.");
             }
+
+            // Asegurar que los roles existan después de la migración
+            await SeedData.Initialize(services);
         }
     }
     catch (Exception ex)
     {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("\n--- ERROR AL INICIAR LA BASE DE DATOS ---");
-        Console.WriteLine("Ocurrio un error al intentar conectar o crear la base de datos.");
-        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el serdidor este online");
-        Console.WriteLine($"\nDetalle del error: {ex.Message}");
-        Console.ResetColor();
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrió un error al inicializar la base de datos o los roles.");
     }
 }
+// -----------
 
 
 app.Run();
