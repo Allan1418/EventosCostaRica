@@ -32,7 +32,7 @@ namespace EventosCostaRica.Business
         }
         public async Task<string> Login(LoginDto loginDto)
         {
-            var  usuario = await _userManager.FindByNameAsync(loginDto.UserName);
+            var  usuario = await _userManager.FindByNameAsync(loginDto.Email);
             if (usuario == null)
             {
                 return null;

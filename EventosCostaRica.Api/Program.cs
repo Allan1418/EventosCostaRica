@@ -1,5 +1,4 @@
 using EventosCostaRica.Business;
-using EventosCostaRica.Business.SeedData;
 using EventosCostaRica.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -62,9 +61,8 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
-app.UseAuthentication(); // Habilita la autenticación JWT
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 
@@ -72,7 +70,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-
     try
     {
         using (var scope = app.Services.CreateScope())
@@ -80,7 +77,6 @@ if (app.Environment.IsDevelopment())
             var services = scope.ServiceProvider;
             var context = services.GetRequiredService<ContextoDB>();
 
-            // Lógica de migración y creación de roles
             if (context.Database.CanConnect())
             {
                 Console.WriteLine("MODO DESARROLLO: La base de datos ya existe. ¿Desea reiniciarla? (y/n)");
@@ -88,6 +84,7 @@ if (app.Environment.IsDevelopment())
                 Console.WriteLine();
 
                 if (response == "y")
+
                 {
                     Console.WriteLine("Borrando y recreando la base de datos...");
                     context.Database.EnsureDeleted();
@@ -104,19 +101,58 @@ if (app.Environment.IsDevelopment())
                 Console.WriteLine("MODO DESARROLLO: La base de datos no existe. Creandola...");
                 context.Database.Migrate();
                 Console.WriteLine("Base de datos creada con exito.");
-            }
 
-            // Asegurar que los roles existan después de la migración
-            await SeedData.Initialize(services);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("\n--- ERROR AL INICIAR LA BASE DE DATOS ---");
+        Console.WriteLine("Ocurrio un error al intentar conectar o crear la base de datos.");
+        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el serdidor este online");
+        Console.WriteLine($"\nDetalle del error: {ex.Message}");
+        Console.ResetColor();
+    }
+
+}
+
+if (app.Environment.IsDevelopment())
+{
+    try
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            await InitializeRolesAsync(services);
+            Console.WriteLine("Roles inicializados con éxito.");
         }
     }
     catch (Exception ex)
     {
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error al inicializar la base de datos o los roles.");
+        logger.LogError(ex, "Ocurrió un error al inicializar los roles.");
     }
 }
-// -----------
-
 
 app.Run();
+
+static async Task InitializeRolesAsync(IServiceProvider serviceProvider)
+{
+    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    if (!await roleManager.RoleExistsAsync("Usuario"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Usuario"));
+    }
+
+     if (!await roleManager.RoleExistsAsync("Administrador"))
+     {
+         await roleManager.CreateAsync(new IdentityRole("Administrador"));
+     }
+
+    if (!await roleManager.RoleExistsAsync("Cliente"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Cliente"));
+    }
+}
