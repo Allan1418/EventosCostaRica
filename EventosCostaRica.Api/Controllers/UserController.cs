@@ -22,11 +22,11 @@ namespace EventosCostaRica.Api.Controllers
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
-        { 
+        {
             var token = await _usuarioService.Login(loginDto);
 
             if (token == null)
-            { 
+            {
                 return Unauthorized(new { message = "Usuario o contraseña invalida" });
             }
             return Ok(new { token });
@@ -61,6 +61,26 @@ namespace EventosCostaRica.Api.Controllers
                 return NotFound(new { message = "No se encontraron usuarios." });
             }
             return Ok(users);
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            await _usuarioService.Logout();
+            return Ok(new { message = "Usuario ha cerrado sesión con exito." });
+        } 
+
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userDetail = await _usuarioService.LoggedUserDetailAsync();
+            if (userDetail == null)
+            {
+                return NotFound(new { message = "Usuario no encontrado." });
+            }
+            return Ok(userDetail);
         }
     }
 }

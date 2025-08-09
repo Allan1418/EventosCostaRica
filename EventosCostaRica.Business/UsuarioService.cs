@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using EventosCostaRica.Repository;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 
 namespace EventosCostaRica.Business
 {
@@ -20,7 +21,9 @@ namespace EventosCostaRica.Business
         Task<string> Login(LoginDto loginDto);
         Task<IdentityResult> Register(RegisterDto registerDto);
         Task<IEnumerable<UserDto>> GetAllUserAsync();
-        
+        Task Logout();
+        Task<UserDto> LoggedUserDetailAsync();
+
     }
     public class UsuarioService : IUsuarioService
     {
@@ -29,15 +32,18 @@ namespace EventosCostaRica.Business
         private readonly IConfiguration _configuration;
         private readonly IRepositoryUsuarios _repositoryUsuarios;
         private readonly ILogger<UsuarioService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UsuarioService(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager,
-            IConfiguration configuration, IRepositoryUsuarios repositoryUsuarios, ILogger<UsuarioService> logger)
+            IConfiguration configuration, IRepositoryUsuarios repositoryUsuarios, ILogger<UsuarioService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _repositoryUsuarios = repositoryUsuarios;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<string> Login(LoginDto loginDto)
@@ -63,7 +69,7 @@ namespace EventosCostaRica.Business
         {
             var usuario = new Usuario
             {
-                UserName = registerDto.Username,
+                UserName = registerDto.UserName,
                 Email = registerDto.Email
             };
             //Crea el usuario con la contraseña proporcionada
@@ -86,7 +92,7 @@ namespace EventosCostaRica.Business
                 new Claim(ClaimTypes.Name, usuario.UserName), //Nombre de usuario
                 new Claim(ClaimTypes.Email, usuario.Email), //Email del usuario
                 new Claim(ClaimTypes.NameIdentifier, usuario.Id), //Identificador del usuario
-                 new Claim(JwtRegisteredClaimNames.Iss, _configuration["Jwt:Issuer"]),
+                new Claim(JwtRegisteredClaimNames.Iss, _configuration["Jwt:Issuer"]),
                 new Claim(JwtRegisteredClaimNames.Aud, _configuration["Jwt:Audience"])
 
             };
@@ -118,7 +124,29 @@ namespace EventosCostaRica.Business
                 UserName = u.UserName,
                 Email = u.Email
             }).ToList(); 
-
         }
+
+        public async Task Logout()
+        {
+            await Task.CompletedTask;
+            _logger?.LogInformation($"Solicitud de cierre de sesión recibida.");
+        }
+
+        public async Task<UserDto> LoggedUserDetailAsync()
+        {
+            
+            // Obtiene el ID del usuario de los claims (NameIdentifier es el UserId)
+            var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var usuario = await _userManager.FindByIdAsync(userId);
+
+            return new UserDto
+            {
+                Id = usuario.Id,
+                UserName = usuario.UserName,
+                Email = usuario.Email
+            };
+        }
+
+
     }
 }
