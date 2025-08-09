@@ -3,6 +3,7 @@ using EventosCostaRica.Business;
 using EventosCostaRica.Data.Dtos; // Importamos los DTOs
 using Microsoft.AspNetCore.Identity;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EventosCostaRica.Api.Controllers
 {
@@ -11,10 +12,12 @@ namespace EventosCostaRica.Api.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUsuarioService _usuarioService;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(IUsuarioService usuarioService)
+        public UserController(IUsuarioService usuarioService, ILogger<UserController> logger)
         {
             _usuarioService = usuarioService;
+            _logger = logger;
         }
 
         [HttpPost("login")]
@@ -40,5 +43,24 @@ namespace EventosCostaRica.Api.Controllers
             return Ok(new { message = "Usuario registrado con exito." });
         }
 
+        [HttpGet("list")]
+        [Authorize(Roles = "ADMINISTRADOR")] // Asegúrate que coincida con el nombre del rol en la DB
+        public async Task<IActionResult> GetAllUsers()
+        {
+            // --- INICIO: Añadir log para depuración ---
+            _logger.LogInformation("Entrando al método GetAllUsers. Claims del usuario actual:");
+            foreach (var claim in HttpContext.User.Claims)
+            {
+                _logger.LogInformation($"  Tipo: {claim.Type}, Valor: {claim.Value}");
+            }
+            // --- FIN: Añadir log para depuración ---
+
+            var users = await _usuarioService.GetAllUserAsync();
+            if (users == null || !users.Any())
+            {
+                return NotFound(new { message = "No se encontraron usuarios." });
+            }
+            return Ok(users);
+        }
     }
 }

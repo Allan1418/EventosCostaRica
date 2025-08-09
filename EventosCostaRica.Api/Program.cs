@@ -1,8 +1,12 @@
 using EventosCostaRica.Business;
 using EventosCostaRica.Data;
+using EventosCostaRica.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,17 +15,41 @@ builder.Configuration.AddJsonFile("connectionstrings.json", optional: true, relo
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ContextoDB>(options => options.UseSqlServer(connectionString));
 
-builder.Services.AddIdentity<Usuario,IdentityRole>()
+builder.Services.AddIdentity<Usuario, IdentityRole>()
     .AddEntityFrameworkStores<ContextoDB>()
     .AddDefaultTokenProviders();
 
+// Configuración de autenticación JWT Bearer para el token de acceso
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true, // Valida el emisor (Issuer) del token
+        ValidateAudience = true, // Valida la audiencia (Audience) del token
+        ValidateLifetime = true, // Valida el tiempo de vida del token (expiración)
+        ValidateIssuerSigningKey = true, // Valida la firma del token con la clave secreta
+
+        // Obtiene los valores de tu appsettings.json
+        ValidIssuer = builder.Configuration["Jwt:Issuer"], // Asegúrate de tener "Issuer" en appsettings.json
+        ValidAudience = builder.Configuration["Jwt:Audience"], // Asegúrate de tener "Audience" en appsettings.json
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])) // La clave secreta para validar
+    };
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
+// Registro de tus servicios y repositorios personalizados
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped(typeof(IRepositoryBase<>), typeof(RepositoryBase<>));
+builder.Services.AddScoped<IRepositoryUsuarios, RepositoryUsuarios>();
 
 
 builder.Services.AddSwaggerGen(c =>
@@ -60,16 +88,14 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
 
-
+// Bloque 1: Configuración de Swagger y lógica de migración de la base de datos.
 if (app.Environment.IsDevelopment())
 {
+    // ¡IMPORTANTE! Mueve UseSwagger y UseSwaggerUI aquí, al inicio del bloque de desarrollo.
     app.UseSwagger();
     app.UseSwaggerUI();
+
     try
     {
         using (var scope = app.Services.CreateScope())
@@ -84,7 +110,6 @@ if (app.Environment.IsDevelopment())
                 Console.WriteLine();
 
                 if (response == "y")
-
                 {
                     Console.WriteLine("Borrando y recreando la base de datos...");
                     context.Database.EnsureDeleted();
@@ -101,7 +126,6 @@ if (app.Environment.IsDevelopment())
                 Console.WriteLine("MODO DESARROLLO: La base de datos no existe. Creandola...");
                 context.Database.Migrate();
                 Console.WriteLine("Base de datos creada con exito.");
-
             }
         }
     }
@@ -117,6 +141,15 @@ if (app.Environment.IsDevelopment())
 
 }
 
+// Estos middlewares deben venir DESPUÉS de Swagger (si Swagger está en el bloque de desarrollo)
+// ya que manejan el enrutamiento y la seguridad de tus APIs principales.
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers(); // Este debe ser de los últimos, después de la seguridad.
+
+
+// Bloque 2: Lógica de inicialización de roles (separado del de migración)
 if (app.Environment.IsDevelopment())
 {
     try
@@ -141,18 +174,18 @@ static async Task InitializeRolesAsync(IServiceProvider serviceProvider)
 {
     var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-    if (!await roleManager.RoleExistsAsync("Usuario"))
+    if (!await roleManager.RoleExistsAsync("USUARIO"))
     {
-        await roleManager.CreateAsync(new IdentityRole("Usuario"));
+        await roleManager.CreateAsync(new IdentityRole("USUARIO"));
     }
 
-     if (!await roleManager.RoleExistsAsync("Administrador"))
-     {
-         await roleManager.CreateAsync(new IdentityRole("Administrador"));
-     }
-
-    if (!await roleManager.RoleExistsAsync("Cliente"))
+    if (!await roleManager.RoleExistsAsync("ADMINISTRADOR"))
     {
-        await roleManager.CreateAsync(new IdentityRole("Cliente"));
+        await roleManager.CreateAsync(new IdentityRole("ADMINISTRADOR"));
+    }
+
+    if (!await roleManager.RoleExistsAsync("CLIENTE"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("CLIENTE"));
     }
 }

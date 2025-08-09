@@ -10,6 +10,8 @@ using EventosCostaRica.Data.Dtos;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using EventosCostaRica.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace EventosCostaRica.Business
 {
@@ -17,22 +19,30 @@ namespace EventosCostaRica.Business
     {
         Task<string> Login(LoginDto loginDto);
         Task<IdentityResult> Register(RegisterDto registerDto);
+        Task<IEnumerable<UserDto>> GetAllUserAsync();
+        
     }
     public class UsuarioService : IUsuarioService
     {
         private readonly UserManager<Usuario> _userManager;
         private readonly SignInManager<Usuario> _signInManager;
         private readonly IConfiguration _configuration;
+        private readonly IRepositoryUsuarios _repositoryUsuarios;
+        private readonly ILogger<UsuarioService> _logger;
 
-        public UsuarioService(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager, IConfiguration configuration)
-        { 
+        public UsuarioService(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager,
+            IConfiguration configuration, IRepositoryUsuarios repositoryUsuarios, ILogger<UsuarioService> logger)
+        {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _repositoryUsuarios = repositoryUsuarios;
+            _logger = logger;
         }
+
         public async Task<string> Login(LoginDto loginDto)
         {
-            var  usuario = await _userManager.FindByNameAsync(loginDto.Email);
+            var usuario = await _userManager.FindByEmailAsync(loginDto.Email);
             if (usuario == null)
             {
                 return null;
@@ -41,12 +51,13 @@ namespace EventosCostaRica.Business
             //verifica la contraseña del usuario
             var result = await _signInManager.CheckPasswordSignInAsync(usuario, loginDto.Password, false);
 
-            if (!result.Succeeded)
-            {
-                return null;
-            }
+            if (!result.Succeeded)return null;
+
+            var rolesDelUsuario = await _userManager.GetRolesAsync(usuario);
+            _logger.LogInformation($"Usuario {usuario.UserName} ha iniciado sesión. Roles recuperados de UserManager: {string.Join(", ", rolesDelUsuario)}");
+
             return GenerateJwtToken(usuario);
-        } 
+        }
 
         public async Task<IdentityResult> Register(RegisterDto registerDto)
         {
@@ -60,7 +71,7 @@ namespace EventosCostaRica.Business
             if (result.Succeeded)
             {
                 //Si el registro es exitoso, se le asigna el rol de usuario por defecto
-                await _userManager.AddToRoleAsync(usuario, "Usuario");
+                await _userManager.AddToRoleAsync(usuario, "ADMINISTRADOR");
             }
             return result;
         }
@@ -69,17 +80,22 @@ namespace EventosCostaRica.Business
         {
             var tokenHandler = new JwtSecurityTokenHandler();//Crear tokens, lee los tokens y los valida si estos no han expirado
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);// accede a la clave secreta del JWT desde la configuración
-            
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, usuario.UserName), //Nombre de usuario
                 new Claim(ClaimTypes.Email, usuario.Email), //Email del usuario
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id) //Identificador del usuario
+                new Claim(ClaimTypes.NameIdentifier, usuario.Id), //Identificador del usuario
+                 new Claim(JwtRegisteredClaimNames.Iss, _configuration["Jwt:Issuer"]),
+                new Claim(JwtRegisteredClaimNames.Aud, _configuration["Jwt:Audience"])
+
             };
             var roles = _userManager.GetRolesAsync(usuario).Result;
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role)); //Agrega los roles del usuario como claims
+                _logger.LogInformation($"Añadiendo claim de rol al token: {ClaimTypes.Role} = {role}"); // Log del claim del rol
+
             }
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -92,6 +108,17 @@ namespace EventosCostaRica.Business
             return tokenHandler.WriteToken(token); //Convierte el token a una cadena y la retorna
         }
 
+        public async Task<IEnumerable<UserDto>> GetAllUserAsync()
+        {
+            var usuarios = await _repositoryUsuarios.GetAll();
 
+            return usuarios.Select(u => new UserDto
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email
+            }).ToList(); 
+
+        }
     }
 }
