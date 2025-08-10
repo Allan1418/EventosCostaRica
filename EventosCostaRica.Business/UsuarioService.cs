@@ -22,7 +22,7 @@ namespace EventosCostaRica.Business
         Task<IEnumerable<UserDTO>> GetAllUserAsync();
         Task Logout();
         Task<UserDTO> LoggedUserDetailAsync();
-
+        Task<UserDTO> GetUserByIdAsync(string id);
     }
     public class UsuarioService : IUsuarioService
     {
@@ -106,7 +106,7 @@ namespace EventosCostaRica.Business
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims), //Asigna los claims al token
-                Expires = DateTime.UtcNow.AddHours(1), //Establece la fecha de expiración del token
+                Expires = DateTime.UtcNow.AddDays(1), //Establece la fecha de expiración del token
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature) //Firma el token con la clave secreta
             };
             var token = tokenHandler.CreateToken(tokenDescriptor); //Crea el token con los parámetros definidos
@@ -138,6 +138,18 @@ namespace EventosCostaRica.Business
             var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             var usuario = await _userManager.FindByIdAsync(userId);
 
+            return new UserDTO
+            {
+                Id = usuario.Id,
+                UserName = usuario.UserName,
+                Email = usuario.Email
+            };
+        }
+
+        public async Task<UserDTO> GetUserByIdAsync(string id)
+        {
+            var usuario = await _userManager.FindByIdAsync(id);
+            if (usuario == null) return null;
             return new UserDTO
             {
                 Id = usuario.Id,

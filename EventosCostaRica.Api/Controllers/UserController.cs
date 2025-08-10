@@ -69,13 +69,25 @@ namespace EventosCostaRica.Api.Controllers
         {
             await _usuarioService.Logout();
             return Ok(new { message = "Usuario ha cerrado sesión con exito." });
-        } 
+        }
 
         [HttpGet("profile")]
         [Authorize]
         public async Task<IActionResult> GetProfile()
         {
             var userDetail = await _usuarioService.LoggedUserDetailAsync();
+            if (userDetail == null)
+            {
+                return NotFound(new { message = "Usuario no encontrado." });
+            }
+            return Ok(userDetail);
+        }
+
+        [HttpGet("{id}")]
+        [Authorize(Roles = "ADMINISTRADOR")]
+        public async Task<IActionResult> GetUserById(string id)
+        {
+            var userDetail = await _usuarioService.GetUserByIdAsync(id);
             if (userDetail == null)
             {
                 return NotFound(new { message = "Usuario no encontrado." });
