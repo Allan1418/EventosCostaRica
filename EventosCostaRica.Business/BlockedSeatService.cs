@@ -17,23 +17,29 @@ namespace EventosCostaRica.Business
 
     public class BlockedSeatService : IBlockedSeatService
     {
-        private readonly IRepositoryBlockedSeat _repository;
-        private readonly IRepositoryEvento _evento;
-        public BlockedSeatService(IRepositoryBlockedSeat repository, IRepositoryEvento evento)
+        private readonly IRepositoryBlockedSeat _blockedSeatRepository;
+        private readonly IRepositoryEvento _eventoRepository;
+        private readonly IRepositoryBoleto _boletoRepository;
+        public BlockedSeatService(
+            IRepositoryBlockedSeat repository, 
+            IRepositoryEvento evento,
+            IRepositoryBoleto repositoryBoleto
+            )
         {
-            _repository = repository;
-            _evento = evento;
+            _blockedSeatRepository = repository;
+            _eventoRepository = evento;
+            _boletoRepository = repositoryBoleto;
         }
 
         public async Task Create(BSCreateDTO bsCreateDTO)
         {
-            var evento = await _evento.GetById(bsCreateDTO.EventoId);
+            var evento = await _eventoRepository.GetById(bsCreateDTO.EventoId);
             if (evento == null)
             {
                 throw new KeyNotFoundException("Evento no existe.");
             }
 
-            if (await _repository.GetByCoord(bsCreateDTO.EventoId, bsCreateDTO.SeatRow, bsCreateDTO.SeatColumn) != null)
+            if (await _blockedSeatRepository.GetByCoord(bsCreateDTO.EventoId, bsCreateDTO.SeatRow, bsCreateDTO.SeatColumn) != null)
             {
                 throw new ArgumentException("Asiento Bloqueado ya existe.");
             }
@@ -47,7 +53,10 @@ namespace EventosCostaRica.Business
                 throw new ArgumentException("No se puede agregar un asiento bloqueado de un evento que ya ha ocurrido.");
             }
 
-            //falta excepcion asiento vendido
+            if (await _boletoRepository.GetBySeatAsync(bsCreateDTO.EventoId, bsCreateDTO.SeatRow, bsCreateDTO.SeatColumn) != null)
+            {
+                throw new ArgumentException("No se puede bloquear un asiento que ya tiene un boleto vendido.");
+            }
 
             var bs = new BlockedSeat
             {
@@ -57,13 +66,13 @@ namespace EventosCostaRica.Business
                 Evento = evento
             };
 
-            await _repository.Add(bs);
+            await _blockedSeatRepository.Add(bs);
 
         }
 
         public async Task Delete(BSDeleteDTO bsDelete)
         {
-            var seatToDelete = await _repository.GetByCoord(bsDelete.EventoId, bsDelete.SeatRow, bsDelete.SeatColumn);
+            var seatToDelete = await _blockedSeatRepository.GetByCoord(bsDelete.EventoId, bsDelete.SeatRow, bsDelete.SeatColumn);
 
             if (seatToDelete == null)
             {
@@ -73,7 +82,7 @@ namespace EventosCostaRica.Business
             {
                 throw new ArgumentException("No se puede eliminar un asiento bloqueado de un evento que ya ha ocurrido.");
             }
-            await _repository.DeleteByObj(seatToDelete);
+            await _blockedSeatRepository.DeleteByObj(seatToDelete);
         }
 
     }

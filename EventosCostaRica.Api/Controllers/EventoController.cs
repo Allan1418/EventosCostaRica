@@ -18,6 +18,8 @@ namespace EventosCostaRica.Api.Controllers
             _eventoService = eventoService;
         }
 
+        //Elder
+        // admin
         [HttpPost]
         [ProducesResponseType(typeof(EventoGetDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -40,6 +42,8 @@ namespace EventosCostaRica.Api.Controllers
             }
         }
 
+        //Elder
+        // cualquiera
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<EventoGetDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -56,6 +60,8 @@ namespace EventosCostaRica.Api.Controllers
             }
         }
 
+        //Elder
+        // cualquiera
         [HttpGet("{id}", Name = "GetEvento")]
         [ProducesResponseType(typeof(EventoGetDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -77,6 +83,8 @@ namespace EventosCostaRica.Api.Controllers
             }
         }
 
+        //Elder
+        // cualquiera
         [HttpGet("{id}/grid", Name = "GetEventGrid")]
         [ProducesResponseType(typeof(GridDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -98,7 +106,8 @@ namespace EventosCostaRica.Api.Controllers
             }
         }
 
-
+        //Elder
+        // admin
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -113,6 +122,10 @@ namespace EventosCostaRica.Api.Controllers
             catch (KeyNotFoundException)
             {
                 return NotFound($"No se encontro un evento con el ID {id}.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {

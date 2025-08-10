@@ -12,6 +12,7 @@ namespace EventosCostaRica.Business
     {
         Task<BoletoGetDTO> Create(BoletoCreateDTO dto, string userId);
         Task<BoletoGetDTO> GetById(int id);
+        Task<List<BoletoGetDTO>> GetByUserId(string userId);
     }
     public class BoletoService : IBoletoService
     {

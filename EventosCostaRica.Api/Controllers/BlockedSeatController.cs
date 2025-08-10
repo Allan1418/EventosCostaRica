@@ -17,6 +17,8 @@ namespace EventosCostaRica.Api.Controllers
             _blockedSeatService = blockedSeatService;
         }
 
+        //Elder
+        // admin
         [HttpPost]
         [ProducesResponseType(typeof(BlockedSeat), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -46,6 +48,9 @@ namespace EventosCostaRica.Api.Controllers
             }
         }
 
+
+        //Elder
+        // admin
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

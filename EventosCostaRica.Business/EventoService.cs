@@ -88,9 +88,9 @@ namespace EventosCostaRica.Business
             return eventos.Select(e => new EventoGetDTO(e)).ToList();
         }
 
-        public async Task Update(int id, EventoUpdateDTO eventoUpdateDTO)
+        public async Task Update(int id, EventoUpdateDTO dto)
         {
-            if (eventoUpdateDTO.EventoDate < DateTime.Now)
+            if (dto.EventoDate < DateTime.Now)
             {
                 throw new ArgumentException("La fecha del evento no puede ser en el pasado.");
             }
@@ -101,18 +101,27 @@ namespace EventosCostaRica.Business
                 throw new KeyNotFoundException("Evento no encontrado");
             }
 
-            // falta validar asientos bloqueados y comprados
+            var checkBiggerBoletos = await _repositoryBoleto.CheckBiggers(id, (dto.Rows - 1), (dto.SeatsPerRow - 1));
+            if (checkBiggerBoletos)
+            {
+                throw new ArgumentException($"No se puede poner el nuevo tamaño de {dto.SeatsPerRow}x{dto.Rows}, ya hay boletos fuera del rango.");
+            }
 
 
-            eventoToUpdate.Name = eventoUpdateDTO.Name;
-            eventoToUpdate.Descrp = eventoUpdateDTO.Descrp;
-            eventoToUpdate.EventoDate = eventoUpdateDTO.EventoDate;
-            eventoToUpdate.Location = eventoUpdateDTO.Location;
-            eventoToUpdate.BannerImageUrl = eventoUpdateDTO.BannerImageUrl;
-            eventoToUpdate.Rows = eventoUpdateDTO.Rows;
-            eventoToUpdate.SeatsPerRow = eventoUpdateDTO.SeatsPerRow;
+            eventoToUpdate.Name = dto.Name;
+            eventoToUpdate.Descrp = dto.Descrp;
+            eventoToUpdate.EventoDate = dto.EventoDate;
+            eventoToUpdate.Location = dto.Location;
+            eventoToUpdate.BannerImageUrl = dto.BannerImageUrl;
+            eventoToUpdate.Rows = dto.Rows;
+            eventoToUpdate.SeatsPerRow = dto.SeatsPerRow;
 
             await _repositoryEvento.Update(eventoToUpdate);
+
+            await _repositoryBlockedSeat.DeleteBiggers(id, (eventoToUpdate.Rows - 1), (eventoToUpdate.SeatsPerRow - 1));
+            
+
+
         }
 
         public async Task<GridDTO> GetGrid(int idEvento)
@@ -128,7 +137,10 @@ namespace EventosCostaRica.Business
                 blockedSeats.Select(bs => (bs.SeatRow, bs.SeatColumn))
             );
 
-            //falta agregar los asientos comprados
+            var bookedSeats = await _repositoryBoleto.GetByEventoIdAsync(idEvento);
+            var bookedCoordinates = new HashSet<(int, int)>(
+                bookedSeats.Select(bs => (bs.SeatRow, bs.SeatColumn))
+            );
 
             var grid = new GridDTO
             {
@@ -147,12 +159,28 @@ namespace EventosCostaRica.Business
                 {
 
                     var isBlocked = blockedCoordinates.Contains((row, column));
+                    var isBooked = bookedCoordinates.Contains((row, column));
+
+                    TypeGrid seatType;
+
+                    if (isBlocked)
+                    {
+                        seatType = TypeGrid.Bloqueado;
+                    }
+                    else if (isBooked)
+                    {
+                        seatType = TypeGrid.Ocupado;
+                    }
+                    else
+                    {
+                        seatType = TypeGrid.Disponible;
+                    }
 
                     gridRow.seats.Add(new GridSeatDTO
                     {
                         row = row,
                         column = column,
-                        type = isBlocked ? TypeGrid.Bloqueado : TypeGrid.Disponible
+                        type = seatType
                     });
                 }
                 grid.rows.Add(gridRow);

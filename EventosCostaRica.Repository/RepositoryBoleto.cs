@@ -15,6 +15,7 @@ namespace EventosCostaRica.Repository
         Task<List<Boleto>> GetByEventoIdAsync(int eventoId);
 
         Task<int> CountByEventoIdAsync(int eventoId);
+        Task<bool> CheckBiggers(int eventId, int row, int column);
     }
     public class RepositoryBoleto : RepositoryBase<Boleto>, IRepositoryBoleto
     {
@@ -39,6 +40,11 @@ namespace EventosCostaRica.Repository
         public async Task<int> CountByEventoIdAsync(int eventoId)
         {
             return await _dbSet.CountAsync(b => b.EventoId == eventoId);
+        }
+
+        public async Task<bool> CheckBiggers(int eventId, int row, int column)
+        {
+            return await _dbSet.AnyAsync(bs => bs.EventoId == eventId && (bs.SeatRow > row || (bs.SeatRow == row && bs.SeatColumn > column)));
         }
     }
 }

@@ -12,8 +12,8 @@ namespace EventosCostaRica.Repository
     {
         Task<IEnumerable<BlockedSeat>> GetByEventId(int eventId);
         Task<BlockedSeat?> GetByCoord(int eventId, int row, int column);
-
         Task<int> CountByEvendoId(int eventId);
+        Task DeleteBiggers(int eventId, int row, int column);
     }
     public class RepositoryBlockedSeat : RepositoryBase<BlockedSeat>, IRepositoryBlockedSeat
     {
@@ -39,6 +39,11 @@ namespace EventosCostaRica.Repository
         public async Task<int> CountByEvendoId(int eventId)
         {
             return await _dbSet.CountAsync(bs => bs.EventoId == eventId);
+        }
+
+        public async Task DeleteBiggers(int eventId, int row, int column)
+        {
+            await _dbSet.Where(bs => bs.EventoId == eventId && (bs.SeatRow > row || (bs.SeatRow == row && bs.SeatColumn > column))).ExecuteDeleteAsync();
         }
     }
 }
