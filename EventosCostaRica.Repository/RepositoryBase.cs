@@ -16,6 +16,7 @@ namespace EventosCostaRica.Repository
         Task Add(T entity);
         Task Update(T entity);
         Task Delete(int id);
+        Task DeleteByObj(T entity);
     }
 
 
@@ -61,6 +62,12 @@ namespace EventosCostaRica.Repository
                 _dbSet.Remove(entity);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task DeleteByObj(T entity)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
         }
 
     }

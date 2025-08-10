@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using EventosCostaRica.Data;
+using EventosCostaRica.Repository;
+using EventosCostaRica.Business;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,9 +12,24 @@ builder.Configuration.AddJsonFile("connectionstrings.json", optional: true, relo
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ContextoDB>(options => options.UseSqlServer(connectionString));
 
+builder.Services.AddScoped(typeof(IRepositoryBase<>), typeof(RepositoryBase<>));
+
+builder.Services.AddScoped<IRepositoryEvento, RepositoryEvento>();
+builder.Services.AddScoped<IEventoService, EventoService>();
+
+builder.Services.AddScoped<IRepositoryBlockedSeat, RepositoryBlockedSeat>();
+builder.Services.AddScoped<IBlockedSeatService, BlockedSeatService>();
+
+builder.Services.AddScoped<IRepositoryBoleto, RepositoryBoleto>();
+builder.Services.AddScoped<IBoletoService, BoletoService>();
+
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    // Convertidor para que los enums se traten como strings
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
