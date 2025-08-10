@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using EventosCostaRica.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using EventosCostaRica.Data.Dtos;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,11 +17,11 @@ namespace EventosCostaRica.Business
 {
     public interface IUsuarioService
     {
-        Task<string> Login(LoginDto loginDto);
-        Task<IdentityResult> Register(RegisterDto registerDto);
-        Task<IEnumerable<UserDto>> GetAllUserAsync();
+        Task<string> Login(LoginDTO loginDto);
+        Task<IdentityResult> Register(RegisterDTO registerDto);
+        Task<IEnumerable<UserDTO>> GetAllUserAsync();
         Task Logout();
-        Task<UserDto> LoggedUserDetailAsync();
+        Task<UserDTO> LoggedUserDetailAsync();
 
     }
     public class UsuarioService : IUsuarioService
@@ -30,12 +29,12 @@ namespace EventosCostaRica.Business
         private readonly UserManager<Usuario> _userManager;
         private readonly SignInManager<Usuario> _signInManager;
         private readonly IConfiguration _configuration;
-        private readonly IRepositoryUsuarios _repositoryUsuarios;
+        private readonly IRepositoryUsuario _repositoryUsuarios;
         private readonly ILogger<UsuarioService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UsuarioService(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager,
-            IConfiguration configuration, IRepositoryUsuarios repositoryUsuarios, ILogger<UsuarioService> logger,
+            IConfiguration configuration, IRepositoryUsuario repositoryUsuarios, ILogger<UsuarioService> logger,
             IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
@@ -46,7 +45,7 @@ namespace EventosCostaRica.Business
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<string> Login(LoginDto loginDto)
+        public async Task<string> Login(LoginDTO loginDto)
         {
             var usuario = await _userManager.FindByEmailAsync(loginDto.Email);
             if (usuario == null)
@@ -65,7 +64,7 @@ namespace EventosCostaRica.Business
             return GenerateJwtToken(usuario);
         }
 
-        public async Task<IdentityResult> Register(RegisterDto registerDto)
+        public async Task<IdentityResult> Register(RegisterDTO registerDto)
         {
             var usuario = new Usuario
             {
@@ -114,11 +113,11 @@ namespace EventosCostaRica.Business
             return tokenHandler.WriteToken(token); //Convierte el token a una cadena y la retorna
         }
 
-        public async Task<IEnumerable<UserDto>> GetAllUserAsync()
+        public async Task<IEnumerable<UserDTO>> GetAllUserAsync()
         {
             var usuarios = await _repositoryUsuarios.GetAll();
 
-            return usuarios.Select(u => new UserDto
+            return usuarios.Select(u => new UserDTO
             {
                 Id = u.Id,
                 UserName = u.UserName,
@@ -132,14 +131,14 @@ namespace EventosCostaRica.Business
             _logger?.LogInformation($"Solicitud de cierre de sesión recibida.");
         }
 
-        public async Task<UserDto> LoggedUserDetailAsync()
+        public async Task<UserDTO> LoggedUserDetailAsync()
         {
             
             // Obtiene el ID del usuario de los claims (NameIdentifier es el UserId)
             var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             var usuario = await _userManager.FindByIdAsync(userId);
 
-            return new UserDto
+            return new UserDTO
             {
                 Id = usuario.Id,
                 UserName = usuario.UserName,

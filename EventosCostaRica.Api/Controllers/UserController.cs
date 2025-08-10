@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using EventosCostaRica.Business;
-using EventosCostaRica.Data.Dtos; // Importamos los DTOs
+using EventosCostaRica.Data;
 using Microsoft.AspNetCore.Identity;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +21,7 @@ namespace EventosCostaRica.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
             var token = await _usuarioService.Login(loginDto);
 
@@ -33,7 +33,7 @@ namespace EventosCostaRica.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        public async Task<IActionResult> Register([FromBody] RegisterDTO registerDto)
         {
             var result = await _usuarioService.Register(registerDto);
             if (!result.Succeeded)

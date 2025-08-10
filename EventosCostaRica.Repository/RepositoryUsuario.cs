@@ -8,12 +8,12 @@ using EventosCostaRica.Data;
 
 namespace EventosCostaRica.Repository
 {
-    public interface IRepositoryUsuarios : IRepositoryBase<Usuario>
+    public interface IRepositoryUsuario : IRepositoryBase<Usuario>
     {
     }
-    public class RepositoryUsuarios : RepositoryBase<Usuario>, IRepositoryUsuarios
+    public class RepositoryUsuario : RepositoryBase<Usuario>, IRepositoryUsuario
     {
-        public RepositoryUsuarios(ContextoDB context) : base(context)
+        public RepositoryUsuario(ContextoDB context) : base(context)
         {
         }
     }
