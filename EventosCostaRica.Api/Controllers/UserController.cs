@@ -44,17 +44,9 @@ namespace EventosCostaRica.Api.Controllers
         }
 
         [HttpGet("list")]
-        [Authorize(Roles = "ADMINISTRADOR")] // Asegúrate que coincida con el nombre del rol en la DB
+        [Authorize(Roles = "ADMIN")] 
         public async Task<IActionResult> GetAllUsers()
         {
-            // --- INICIO: Añadir log para depuración ---
-            _logger.LogInformation("Entrando al método GetAllUsers. Claims del usuario actual:");
-            foreach (var claim in HttpContext.User.Claims)
-            {
-                _logger.LogInformation($"  Tipo: {claim.Type}, Valor: {claim.Value}");
-            }
-            // --- FIN: Añadir log para depuración ---
-
             var users = await _usuarioService.GetAllUserAsync();
             if (users == null || !users.Any())
             {
