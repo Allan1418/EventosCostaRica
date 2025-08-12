@@ -1,0 +1,174 @@
+.seat-selector-container {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.seat-selector-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--color-gray-900);
+}
+
+.seat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+}
+
+.seat-legend-item {
+    display: flex;
+    align-items: center;
+}
+
+.seat-legend-color {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    margin-right: 0.5rem;
+}
+
+.seat-available {
+    background-color: var(--color-green-500); /* Green */
+}
+
+.seat-selected {
+    background-color: var(--color-primary-500); /* Blue */
+}
+
+.seat-occupied {
+    background-color: #ef4444; /* Red */
+}
+
+.seat-blocked {
+    background-color: var(--color-gray-400); /* Gray */
+}
+
+.seat-stage {
+    background-color: var(--color-gray-800);
+    color: #fff;
+    text-align: center;
+    padding: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.25rem;
+    font-weight: bold;
+}
+
+.seats-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+}
+
+.seat-row-label {
+    width: 2rem;
+    text-align: center;
+    font-weight: bold;
+    color: var(--color-gray-600);
+    margin-right: 0.5rem;
+}
+
+.seat-row-buttons {
+    display: flex;
+    flex-wrap: wrap; /* Allow seats to wrap in smaller screens */
+    gap: 0.25rem; /* Small gap between seats */
+}
+
+.seat {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent; /* No border by default */
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+
+    .seat:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+.seat-available {
+    background-color: var(--color-green-500);
+    color: #fff;
+}
+
+    .seat-available:hover:not(:disabled) {
+        background-color: #16a34a; /* Darker green on hover */
+    }
+
+.seat-selected {
+    background-color: var(--color-primary-500);
+    color: #fff;
+    border: 2px solid var(--color-primary-700); /* Stronger border for selected */
+}
+
+    .seat-selected:hover:not(:disabled) {
+        background-color: var(--color-primary-600);
+    }
+
+.seat-occupied {
+    background-color: #ef4444;
+    color: #fff;
+}
+
+.seat-blocked {
+    background-color: var(--color-gray-400);
+    color: var(--color-gray-700);
+}
+
+.selected-seats-summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--color-primary-50);
+    border-radius: 0.5rem;
+}
+
+.selected-seats-count {
+    font-weight: 600;
+    color: var(--color-primary-900);
+    margin-bottom: 0.5rem;
+}
+
+.selected-seats-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.selected-seat-tag {
+    background-color: var(--color-primary-200);
+    color: var(--color-primary-800);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.selected-seats-total {
+    margin-top: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: var(--color-primary-900);
+}
+
+.no-seats-available {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-gray-600);
+    font-size: 1rem;
+}

@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventosCostaRica.Repository
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventosCostaRica.Business", "EventosCostaRica.Business\EventosCostaRica.Business.csproj", "{353245A7-7580-4186-88CE-8AE6C060AFA0}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "eventoscostarica.cliente", "EventosCostaRica.Cliente\eventoscostarica.cliente.esproj", "{255F5F8C-CBFD-BD45-4D16-E4F8FF96F8DE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,12 @@ Global
 		{353245A7-7580-4186-88CE-8AE6C060AFA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{353245A7-7580-4186-88CE-8AE6C060AFA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{353245A7-7580-4186-88CE-8AE6C060AFA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{255F5F8C-CBFD-BD45-4D16-E4F8FF96F8DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{255F5F8C-CBFD-BD45-4D16-E4F8FF96F8DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{255F5F8C-CBFD-BD45-4D16-E4F8FF96F8DE}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{255F5F8C-CBFD-BD45-4D16-E4F8FF96F8DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{255F5F8C-CBFD-BD45-4D16-E4F8FF96F8DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{255F5F8C-CBFD-BD45-4D16-E4F8FF96F8DE}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
