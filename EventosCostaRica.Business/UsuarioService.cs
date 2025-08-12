@@ -22,7 +22,7 @@ namespace EventosCostaRica.Business
         Task<IEnumerable<UserDTO>> GetAllUserAsync();
         Task Logout();
         Task<UserDTO> LoggedUserDetailAsync();
-
+        Task<UserDTO> GetUserByIdAsync(string id);
     }
     public class UsuarioService : IUsuarioService
     {
@@ -30,18 +30,16 @@ namespace EventosCostaRica.Business
         private readonly SignInManager<Usuario> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly IRepositoryUsuario _repositoryUsuarios;
-        private readonly ILogger<UsuarioService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UsuarioService(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager,
-            IConfiguration configuration, IRepositoryUsuario repositoryUsuarios, ILogger<UsuarioService> logger,
+            IConfiguration configuration, IRepositoryUsuario repositoryUsuarios, 
             IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _repositoryUsuarios = repositoryUsuarios;
-            _logger = logger;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -59,7 +57,6 @@ namespace EventosCostaRica.Business
             if (!result.Succeeded)return null;
 
             var rolesDelUsuario = await _userManager.GetRolesAsync(usuario);
-            _logger.LogInformation($"Usuario {usuario.UserName} ha iniciado sesión. Roles recuperados de UserManager: {string.Join(", ", rolesDelUsuario)}");
 
             return GenerateJwtToken(usuario);
         }
@@ -76,7 +73,7 @@ namespace EventosCostaRica.Business
             if (result.Succeeded)
             {
                 //Si el registro es exitoso, se le asigna el rol de usuario por defecto
-                await _userManager.AddToRoleAsync(usuario, "ADMINISTRADOR");
+                await _userManager.AddToRoleAsync(usuario, "ADMIN");
             }
             return result;
         }
@@ -99,17 +96,15 @@ namespace EventosCostaRica.Business
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role)); //Agrega los roles del usuario como claims
-                _logger.LogInformation($"Añadiendo claim de rol al token: {ClaimTypes.Role} = {role}"); // Log del claim del rol
-
             }
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims), //Asigna los claims al token
-                Expires = DateTime.UtcNow.AddHours(1), //Establece la fecha de expiración del token
+                Expires = DateTime.UtcNow.AddDays(1), //Establece la fecha de expiración del token
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature) //Firma el token con la clave secreta
             };
-            var token = tokenHandler.CreateToken(tokenDescriptor); //Crea el token con los parámetros definidos
+            var token = tokenHandler.CreateToken(tokenDescriptor); //Crea el token con los parametros definidos
             return tokenHandler.WriteToken(token); //Convierte el token a una cadena y la retorna
         }
 
@@ -128,7 +123,6 @@ namespace EventosCostaRica.Business
         public async Task Logout()
         {
             await Task.CompletedTask;
-            _logger?.LogInformation($"Solicitud de cierre de sesión recibida.");
         }
 
         public async Task<UserDTO> LoggedUserDetailAsync()
@@ -138,6 +132,18 @@ namespace EventosCostaRica.Business
             var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             var usuario = await _userManager.FindByIdAsync(userId);
 
+            return new UserDTO
+            {
+                Id = usuario.Id,
+                UserName = usuario.UserName,
+                Email = usuario.Email
+            };
+        }
+
+        public async Task<UserDTO> GetUserByIdAsync(string id)
+        {
+            var usuario = await _userManager.FindByIdAsync(id);
+            if (usuario == null) return null;
             return new UserDTO
             {
                 Id = usuario.Id,

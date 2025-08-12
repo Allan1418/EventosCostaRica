@@ -225,8 +225,46 @@ if (app.Environment.IsDevelopment())
             var services = scope.ServiceProvider;
             var context = services.GetRequiredService<ContextoDB>();
 
-            // Ponga aqui su logica para crear un usuario admin1 con if exists
+            //datos del usuario admin1
+            const string adminUserName = "admin1";
+            const string adminEmail = "admin@gmail.com";
+            const string password = "Admin123*";
+            const string role = "ADMIN";
 
+            var userManager = services.GetRequiredService<UserManager<Usuario>>();
+
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            if (adminUser == null)
+            {
+                adminUser = new Usuario
+                {
+                    UserName = adminUserName,
+                    Email = adminEmail,
+                    EmailConfirmed = true 
+                };
+
+                var result = await userManager.CreateAsync(adminUser, password);
+                if (result.Succeeded)
+                {
+                    //creacion del usuario admin1 con el rol ADMIN
+                    await userManager.AddToRoleAsync(adminUser, role);
+                    Console.WriteLine($"Usuario '{adminUserName}' creado con exito con el rol '{role}'.");
+                }
+                else
+                {
+                    //en caso de que la creacion falle, imprime los errores ya sea por email duplicado o contraseña debil o no existe el rol ADMIN
+                    Console.WriteLine($"No se pudo crear el usuario '{adminUserName}'. Errores:");
+                    foreach (var error in result.Errors)
+                    {
+                        Console.WriteLine($" - {error.Description}");
+                    }
+                }
+            }
+            else
+            {
+                //el usuario ya existe por lo que no se crea 
+                Console.WriteLine($"El usuario '{adminUserName}' ya existe. No se creo un nuevo usuario.");
+            }
         }
     }
     catch (Exception ex)
