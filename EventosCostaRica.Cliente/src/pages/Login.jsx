@@ -1,82 +1,137 @@
-"use client"
+﻿"use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 import "./Auth.css"
 
 const Login = () => {
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [error, setError] = useState("")
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+    })
+    const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
-    const { login } = useAuth()
+    const [error, setError] = useState("")
+
+    const { login, isAuthenticated } = useAuth()
     const navigate = useNavigate()
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/")
+        }
+    }, [isAuthenticated, navigate])
+
+    const handleChange = (e) => {
+        const { name, value } = e.target
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }))
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setError("")
         setLoading(true)
+        setError("")
+
+        if (!formData.email.trim()) {
+            setError("El correo electrónico es requerido")
+            setLoading(false)
+            return
+        }
+
+        if (!formData.password) {
+            setError("La contraseña es requerida")
+            setLoading(false)
+            return
+        }
 
         try {
-            const success = await login(email, password)
-            if (success) {
+            const result = await login(formData.email.trim(), formData.password)
+
+            if (result.success) {
                 navigate("/")
             } else {
-                setError("Credenciales invalidas. Por favor, intentalo de nuevo.")
+                setError(result.message || "Error en el inicio de sesión")
             }
         } catch (error) {
             console.error("Login error:", error)
-            setError("Error al iniciar sesion. Intentalo de nuevo.")
-        } finally {
-            setLoading(false)
+            setError("Error de conexión. Verifica que el servidor esté funcionando.")
         }
+
+        setLoading(false)
     }
 
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <h2 className="auth-title">Iniciar Sesion</h2>
+                <div className="auth-header">
+                    <h1 className="auth-title">Iniciar Sesión</h1>
+                    <p className="auth-subtitle">Accede a tu cuenta de EventosCR</p>
+                </div>
+
+                {error && (
+                    <div className="auth-error">
+                        <p>{error}</p>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="auth-form">
-                    {error && <p className="auth-error-message">{error}</p>}
-                    <div className="form-group">
-                        <label htmlFor="email" className="form-label">
-                            Correo Electronico
+                    <div className="auth-form-group">
+                        <label className="auth-label">
+                            <Mail className="auth-label-icon" />
+                            Correo Electrónico
                         </label>
                         <input
                             type="email"
-                            id="email"
-                            className="form-input"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className="auth-input"
                             required
                             disabled={loading}
+                            placeholder="ejemplo@correo.com"
                         />
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="password" className="form-label">
-                            Contrasena
+
+                    <div className="auth-form-group">
+                        <label className="auth-label">
+                            <Lock className="auth-label-icon" />
+                            Contraseña
                         </label>
-                        <input
-                            type="password"
-                            id="password"
-                            className="form-input"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            disabled={loading}
-                        />
+                        <div className="auth-password-input">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                className="auth-input"
+                                required
+                                disabled={loading}
+                                placeholder="Tu contraseña"
+                            />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="auth-password-toggle">
+                                {showPassword ? <EyeOff /> : <Eye />}
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" className="form-button" disabled={loading}>
-                        {loading ? "Iniciando sesion..." : "Iniciar Sesion"}
+
+                    <button type="submit" disabled={loading} className="auth-submit-button">
+                        {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
                     </button>
                 </form>
-                <p className="auth-link-text">
-                    No tienes una cuenta?{" "}
-                    <Link to="/register" className="auth-link">
-                        Registrate aqui
-                    </Link>
-                </p>
+
+                <div className="auth-footer">
+                    <p>
+                        ¿No tienes una cuenta?{" "}
+                        <Link to="/register" className="auth-link">
+                            Regístrate aquí
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     )

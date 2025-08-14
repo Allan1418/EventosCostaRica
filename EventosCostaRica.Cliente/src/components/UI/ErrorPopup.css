@@ -1,0 +1,221 @@
+.error-popup {
+    position: fixed;
+    z-index: 9999;
+    min-width: 320px;
+    max-width: 480px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+    /* Posiciones */
+    .error-popup.top-right {
+        top: 24px;
+        right: 24px;
+    }
+
+    .error-popup.top-left {
+        top: 24px;
+        left: 24px;
+    }
+
+    .error-popup.bottom-right {
+        bottom: 24px;
+        right: 24px;
+    }
+
+    .error-popup.bottom-left {
+        bottom: 24px;
+        left: 24px;
+    }
+
+    .error-popup.top-center {
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Animaciones */
+    .error-popup.animate-in {
+        animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .error-popup.animate-out {
+        animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Contenido */
+.popup-content {
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.popup-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+}
+
+.popup-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.popup-text {
+    flex: 1;
+}
+
+.popup-message {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #1e293b;
+}
+
+.popup-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    color: #64748b;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+    .popup-close-btn:hover {
+        background: rgba(100, 116, 139, 0.1);
+        color: #475569;
+    }
+
+/* Barra de progreso */
+.popup-progress-bar {
+    height: 3px;
+    background: rgba(226, 232, 240, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.popup-progress-fill {
+    height: 100%;
+    width: 100%;
+    transform-origin: left;
+    animation: progressFill linear forwards;
+}
+
+@keyframes progressFill {
+    from {
+        transform: scaleX(1);
+    }
+
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Tipos de popup */
+.popup-error {
+    border-left: 4px solid #ef4444;
+}
+
+    .popup-error .popup-icon {
+        color: #ef4444;
+    }
+
+    .popup-error .popup-progress-fill {
+        background: #ef4444;
+    }
+
+.popup-success {
+    border-left: 4px solid #22c55e;
+}
+
+    .popup-success .popup-icon {
+        color: #22c55e;
+    }
+
+    .popup-success .popup-progress-fill {
+        background: #22c55e;
+    }
+
+.popup-warning {
+    border-left: 4px solid #f59e0b;
+}
+
+    .popup-warning .popup-icon {
+        color: #f59e0b;
+    }
+
+    .popup-warning .popup-progress-fill {
+        background: #f59e0b;
+    }
+
+.popup-info {
+    border-left: 4px solid #3b82f6;
+}
+
+    .popup-info .popup-icon {
+        color: #3b82f6;
+    }
+
+    .popup-info .popup-progress-fill {
+        background: #3b82f6;
+    }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .error-popup {
+        left: 16px !important;
+        right: 16px !important;
+        min-width: auto;
+        max-width: none;
+        transform: none !important;
+    }
+
+        .error-popup.top-center {
+            left: 16px;
+            transform: none;
+        }
+
+    .popup-content {
+        padding: 16px;
+    }
+
+    .popup-message {
+        font-size: 13px;
+    }
+}

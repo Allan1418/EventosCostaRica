@@ -11,7 +11,6 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // DB Context Configuration
@@ -37,6 +36,17 @@ builder.Services.AddIdentity<Usuario, IdentityRole>()
 builder.Services.AddScoped<IRepositoryUsuario, RepositoryUsuario>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
+// CONFIGURACIÓN DE CORS - MUY IMPORTANTE PARA EL FRONTEND
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -73,9 +83,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
 builder.Services.AddHttpContextAccessor();
-
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -112,8 +120,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -123,14 +129,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// USAR CORS - DEBE IR ANTES DE UseAuthorization
+app.UseCors("AllowReactApp");
+
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 
 // Inicializacion de la Base de Datos
 if (app.Environment.IsDevelopment())
@@ -173,7 +180,7 @@ if (app.Environment.IsDevelopment())
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine("\n--- ERROR AL INICIAR LA BASE DE DATOS ---");
         Console.WriteLine("Ocurrio un error al intentar conectar o crear la base de datos.");
-        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el serdidor este online");
+        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el servidor este online");
         Console.WriteLine($"\nDetalle del error: {ex.Message}");
         Console.ResetColor();
     }
@@ -200,7 +207,6 @@ if (app.Environment.IsDevelopment())
             {
                 await roleManager.CreateAsync(new IdentityRole("ADMIN"));
             }
-
         }
     }
     catch (Exception ex)
@@ -208,14 +214,13 @@ if (app.Environment.IsDevelopment())
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine("\n--- ERROR AL INICIAR LOS ROLES ---");
         Console.WriteLine("Ocurrio un error al intentar conectar o crear la base de datos.");
-        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el serdidor este online");
+        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el servidor este online");
         Console.WriteLine($"\nDetalle del error: {ex.Message}");
         Console.ResetColor();
     }
 }
 
-
-// Inicializacion de de usuario admin1
+// Inicializacion de usuario admin1
 if (app.Environment.IsDevelopment())
 {
     try
@@ -240,7 +245,7 @@ if (app.Environment.IsDevelopment())
                 {
                     UserName = adminUserName,
                     Email = adminEmail,
-                    EmailConfirmed = true 
+                    EmailConfirmed = true
                 };
 
                 var result = await userManager.CreateAsync(adminUser, password);
@@ -272,11 +277,15 @@ if (app.Environment.IsDevelopment())
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine("\n--- ERROR AL CREAR AL USUARIO admin1 ---");
         Console.WriteLine("Ocurrio un error al intentar conectar o crear la base de datos.");
-        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el serdidor este online");
+        Console.WriteLine("Revisa tu cadena de conexion en el archivo 'connectionstrings.json' o que el servidor este online");
         Console.WriteLine($"\nDetalle del error: {ex.Message}");
         Console.ResetColor();
     }
 }
 
+Console.WriteLine("=== SERVIDOR INICIADO ===");
+Console.WriteLine("API disponible en: https://localhost:7011");
+Console.WriteLine("Swagger UI: https://localhost:7011/swagger");
+Console.WriteLine("Presiona Ctrl+C para detener el servidor");
 
 app.Run();

@@ -1,0 +1,244 @@
+.user-list-page-container {
+    min-height: 100vh;
+    background-color: var(--color-gray-50);
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.user-list-header-section {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-bottom: 2rem;
+}
+
+.user-list-main-title {
+    font-size: 1.875rem;
+    font-weight: bold;
+    color: var(--color-gray-900);
+}
+
+.user-list-subtitle {
+    color: var(--color-gray-600);
+    margin-top: 0.5rem;
+}
+
+.user-list-grid {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .user-list-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .user-list-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.user-card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out;
+}
+
+    .user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+.user-card-header {
+    height: 6rem;
+    background: linear-gradient(to right, var(--color-primary-500), var(--color-secondary-500));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-card-icon {
+    height: 2.5rem;
+    width: 2.5rem;
+    color: #fff;
+}
+
+.user-card-content {
+    padding: 1.5rem;
+}
+
+.user-card-title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.user-card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-gray-900);
+}
+
+.user-current-badge {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-800);
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.user-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.user-card-detail-item {
+    display: flex;
+    align-items: center;
+    color: var(--color-gray-600);
+    font-size: 0.875rem;
+}
+
+.user-card-detail-icon {
+    height: 1rem;
+    width: 1rem;
+    margin-right: 0.5rem;
+    color: var(--color-primary-500);
+}
+
+.user-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--color-gray-200);
+    padding-top: 1rem;
+}
+
+.user-id {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+}
+
+.user-status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-active {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.status-inactive {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-800);
+}
+
+/* Loading State */
+.user-list-loading-container {
+    min-height: 64vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Error State */
+.user-list-error-container {
+    min-height: 64vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem 1rem;
+}
+
+.user-list-error-content {
+    text-align: center;
+}
+
+.user-list-error-icon {
+    margin-left: auto;
+    margin-right: auto;
+    height: 4rem;
+    width: 4rem;
+    color: var(--color-gray-400);
+    margin-bottom: 1rem;
+}
+
+.user-list-error-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-gray-900);
+    margin-bottom: 1rem;
+}
+
+.user-list-error-message {
+    color: var(--color-gray-600);
+    margin-bottom: 2rem;
+}
+
+.user-list-retry-button {
+    background-color: var(--color-primary-600);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+
+    .user-list-retry-button:hover {
+        background-color: var(--color-primary-700);
+    }
+
+/* Empty State */
+.user-list-empty-container {
+    min-height: 40vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem 1rem;
+}
+
+.user-list-empty-content {
+    text-align: center;
+}
+
+.user-list-empty-icon {
+    margin-left: auto;
+    margin-right: auto;
+    height: 4rem;
+    width: 4rem;
+    color: var(--color-gray-400);
+    margin-bottom: 1rem;
+}
+
+.user-list-empty-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-gray-900);
+    margin-bottom: 1rem;
+}
+
+.user-list-empty-message {
+    color: var(--color-gray-600);
+}

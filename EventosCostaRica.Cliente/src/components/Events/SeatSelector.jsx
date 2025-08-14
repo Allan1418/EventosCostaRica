@@ -1,180 +1,356 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
-import { useCart } from "../../context/CartContext"
-import api from "../../services/api"
+import { eventService, seatService, ticketService, getErrorMessage } from "../../services/api"
+import { Users, Eye, EyeOff } from "lucide-react"
 import "./SeatSelector.css"
 
-const SeatSelector = ({ evento }) => {
-    const { selectedSeats, setSelectedSeats } = useCart()
-    const [seatGrid, setSeatGrid] = useState(null)
+const SeatSelector = ({ evento, onSeatSelect }) => {
+    const [seatGrid, setSeatGrid] = useState([])
+    const [blockedSeats, setBlockedSeats] = useState([])
+    const [selectedSeats, setSelectedSeats] = useState([])
+    const [purchasedSeats, setPurchasedSeats] = useState([]) // Agregar asientos comprados
+    const [seatOwners, setSeatOwners] = useState({}) // Mapeo de asientos a usuarios
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState("")
+    const [showUsers, setShowUsers] = useState(false) // Toggle para mostrar usuarios
 
     useEffect(() => {
-        loadSeatGrid()
-    }, [evento.id])
+        if (evento?.id) {
+            loadSeatData()
+        }
+    }, [evento?.id])
 
-    const loadSeatGrid = async () => {
+    useEffect(() => {
+        if (onSeatSelect) {
+            onSeatSelect(selectedSeats)
+        }
+    }, [selectedSeats, onSeatSelect])
+
+    const loadSeatData = async () => {
         try {
-            const response = await api.get(`/evento/${evento.id}/grid`)
-            setSeatGrid(response.data)
-            setLoading(false)
-        } catch (error) {
-            console.error("Error loading seat grid:", error)
-            generateFallbackGrid()
-            setLoading(false)
-        }
-    }
+            setLoading(true)
+            setError("")
 
-    const generateFallbackGrid = () => {
-        const rows = []
-        for (let i = 0; i < (evento.rows || 8); i++) {
-            const seats = []
-            for (let j = 0; j < (evento.seatsPerRow || 10); j++) {
-                seats.push({
-                    row: i + 1,
-                    column: j + 1,
-                    type: "Disponible",
-                })
+            // Cargar grid de asientos
+            const gridData = await eventService.getSeatGrid(evento.id)
+            setSeatGrid(gridData)
+
+            // Cargar asientos bloqueados
+            const blockedData = await seatService.getBlockedSeats(evento.id)
+            setBlockedSeats(blockedData)
+
+            try {
+                const ticketsData = await ticketService.getByEvent(evento.id)
+                const purchased = []
+                const owners = {}
+
+                if (ticketsData && Array.isArray(ticketsData)) {
+                    ticketsData.forEach((ticket) => {
+                        const seatKey = `${ticket.seatRow}-${ticket.seatColumn}`
+                        purchased.push({ fila: ticket.seatRow, columna: ticket.seatColumn })
+                        owners[seatKey] = {
+                            userName: ticket.userName || "Usuario",
+                            userEmail: ticket.userEmail || "",
+                            purchaseDate: ticket.purchaseDate,
+                        }
+                    })
+                }
+
+                setPurchasedSeats(purchased)
+                setSeatOwners(owners)
+            } catch (ticketError) {
+                console.warn("No se pudieron cargar los tickets:", ticketError)
+                setPurchasedSeats([])
+                setSeatOwners({})
             }
-            rows.push({
-                row: i + 1,
-                seats: seats,
-            })
+        } catch (error) {
+            const errorMessage = getErrorMessage(error)
+            setError(errorMessage)
+        } finally {
+            setLoading(false)
         }
-        setSeatGrid({ idEvento: evento.id, rows: rows })
     }
 
-    const calculateSeatPosition = (row, column) => {
-        return (row + 1) * (column + 1)
+    const isSeatBlocked = (row, column) => {
+        return blockedSeats.some((seat) => seat.fila === row && seat.columna === column)
     }
 
-    const handleSeatClick = async (seatData) => {
-        const seatId = `${seatData.row}-${seatData.column}`
-        const seatPosition = calculateSeatPosition(seatData.row - 1, seatData.column - 1)
+    const isSeatPurchased = (row, column) => {
+        return purchasedSeats.some((seat) => seat.fila === row && seat.columna === column)
+    }
 
-        if (seatData.type !== "Disponible") {
+    const isSeatSelected = (row, column) => {
+        return selectedSeats.includes(`${row}-${column}`)
+    }
+
+    const getSeatOwner = (row, column) => {
+        const seatKey = `${row}-${column}`
+        return seatOwners[seatKey]
+    }
+
+    const handleSeatClick = async (row, column) => {
+        const seatId = `${row}-${column}`
+
+        if (isSeatBlocked(row, column) || isSeatPurchased(row, column)) {
             return
         }
 
-        try {
-            if (selectedSeats.includes(seatId)) {
-                await api.delete("/blockedseat", {
-                    data: {
-                        eventoId: evento.id,
-                        seatRow: seatData.row,
-                        seatColumn: seatData.column,
-                    },
+        const eventoIdNum = Number(evento.id)
+        const rowNum = Number(row)
+        const columnNum = Number(column)
+
+        // Validar que los números sean válidos
+        if (isNaN(eventoIdNum) || isNaN(rowNum) || isNaN(columnNum)) {
+            console.error("Invalid seat data:", { eventoId: evento.id, row, column })
+            alert("Error: Datos de asiento inválidos")
+            return
+        }
+
+        if (eventoIdNum <= 0 || rowNum < 0 || columnNum < 0) {
+            console.error("Invalid seat coordinates:", { eventoIdNum, rowNum, columnNum })
+            alert("Error: Coordenadas de asiento inválidas")
+            return
+        }
+
+        if (isSeatSelected(row, column)) {
+            // Deseleccionar asiento
+            setSelectedSeats((prev) => prev.filter((id) => id !== seatId))
+
+            // Desbloquear asiento en el servidor
+            try {
+                await seatService.unblockSeat({
+                    eventoId: eventoIdNum,
+                    seatRow: rowNum,
+                    seatColumn: columnNum,
                 })
-                setSelectedSeats((prev) => prev.filter((s) => s !== seatId))
-            } else {
-                await api.post("/blockedseat", {
-                    eventoId: evento.id,
-                    seatRow: seatData.row,
-                    seatColumn: seatData.column,
-                })
-                setSelectedSeats((prev) => [...prev, seatId])
+
+                // Actualizar lista de asientos bloqueados
+                setBlockedSeats((prev) => prev.filter((seat) => !(seat.fila === row && seat.columna === column)))
+            } catch (error) {
+                console.error("Error unblocking seat:", error)
             }
-            // Recargar grid para obtener estado actualizado
-            await loadSeatGrid()
-        } catch (error) {
-            console.error("Error blocking/unblocking seat:", error)
-            alert("Error al seleccionar asiento. Intenta de nuevo.")
-        }
-    }
-
-    const getSeatClass = (seat) => {
-        let className = "seat"
-        if (seat.type === "Bloqueado") {
-            className += " seat-blocked"
-        } else if (seat.type === "Ocupado") {
-            className += " seat-occupied"
-        } else if (selectedSeats.includes(`${seat.row}-${seat.column}`)) {
-            className += " seat-selected"
         } else {
-            className += " seat-available"
+            // Seleccionar asiento
+            try {
+                await seatService.blockSeat({
+                    eventoId: eventoIdNum,
+                    seatRow: rowNum,
+                    seatColumn: columnNum,
+                })
+
+                setSelectedSeats((prev) => [...prev, seatId])
+
+                // Actualizar lista de asientos bloqueados
+                setBlockedSeats((prev) => [...prev, { eventoId: evento.id, fila: row, columna: column }])
+            } catch (error) {
+                const errorMessage = getErrorMessage(error)
+                alert(`Error al seleccionar asiento: ${errorMessage}`)
+            }
         }
-        return className
     }
 
-    const getRowLabel = (rowNumber) => {
-        return String.fromCharCode(64 + rowNumber) // A, B, C, etc.
+    const getSeatClass = (row, column) => {
+        if (isSeatSelected(row, column)) {
+            return "seat selected"
+        }
+        if (isSeatPurchased(row, column)) {
+            return "seat purchased" // Nueva clase para asientos comprados
+        }
+        if (isSeatBlocked(row, column)) {
+            return "seat blocked-hidden" // Nueva clase para asientos bloqueados ocultos
+        }
+        return "seat available"
+    }
+
+    const getSeatTitle = (row, column) => {
+        const displayRow = row + 1
+        const displayColumn = column + 1
+        const seatNumber = displayRow * displayColumn
+        const baseTitle = `Fila ${displayRow}, Asiento ${displayColumn} (Nº ${seatNumber})`
+
+        if (isSeatPurchased(row, column)) {
+            const owner = getSeatOwner(row, column)
+            if (owner && showUsers) {
+                return `${baseTitle} - Comprado por: ${owner.userName}`
+            }
+            return `${baseTitle} - Comprado`
+        }
+
+        if (isSeatSelected(row, column)) {
+            return `${baseTitle} - Seleccionado`
+        }
+
+        if (isSeatBlocked(row, column)) {
+            return "" // Sin tooltip para asientos bloqueados
+        }
+
+        return `${baseTitle} - Disponible`
+    }
+
+    const renderSeatGrid = () => {
+        const rows = []
+
+        for (let row = evento.rows - 1; row >= 0; row--) {
+            const seats = []
+
+            for (let column = 0; column < evento.seatsPerRow; column++) {
+                const owner = getSeatOwner(row, column)
+
+                if (isSeatBlocked(row, column)) {
+                    seats.push(
+                        <div key={`${row}-${column}`} className="seat-empty-space" title="">
+                            {/* Espacio completamente vacío */}
+                        </div>,
+                    )
+                } else {
+                    seats.push(
+                        <button
+                            key={`${row}-${column}`}
+                            className={getSeatClass(row, column)}
+                            onClick={() => handleSeatClick(row, column)}
+                            disabled={isSeatPurchased(row, column)}
+                            title={getSeatTitle(row, column)}
+                        >
+                            {showUsers && owner ? (
+                                <span className="seat-user-initial">{owner.userName.charAt(0).toUpperCase()}</span>
+                            ) : (
+                                (row + 1) * (column + 1)
+                            )}
+                        </button>,
+                    )
+                }
+            }
+
+            rows.push(
+                <div key={row} className="seat-row">
+                    <div className="row-label">{row + 1}</div>
+                    <div className="seats">{seats}</div>
+                </div>,
+            )
+        }
+
+        return rows
     }
 
     if (loading) {
         return (
-            <div className="loading-spinner-container">
-                <div className="loading-spinner"></div>
+            <div className="seat-selector-container">
+                <div className="seat-selector-loading">
+                    <div className="loading-spinner"></div>
+                    <p>Cargando asientos...</p>
+                </div>
             </div>
         )
     }
 
-    if (!seatGrid || !seatGrid.rows || seatGrid.rows.length === 0) {
-        return <div className="no-seats-available">No hay informacion de asientos disponible para este evento.</div>
+    if (error) {
+        return (
+            <div className="seat-selector-container">
+                <div className="seat-selector-error">
+                    <h3>Error al cargar asientos</h3>
+                    <p>{error}</p>
+                    <button onClick={loadSeatData} className="retry-button">
+                        Intentar de nuevo
+                    </button>
+                </div>
+            </div>
+        )
     }
 
     return (
         <div className="seat-selector-container">
-            <h3 className="seat-selector-title">Selecciona tus asientos</h3>
+            <div className="seat-selector-header">
+                <h3 className="seat-selector-title">
+                    Seleccionar Asientos
+                    <span className="capacity-info">
+                        (Matriz: {evento.rows} × {evento.seatsPerRow} = {evento.rows * evento.seatsPerRow} asientos)
+                    </span>
+                </h3>
 
-            <div className="seat-legend">
-                <div className="seat-legend-item">
-                    <div className="seat-legend-color seat-available"></div>
-                    <span>Disponible</span>
+                <div className="header-controls">
+                    <button
+                        onClick={() => setShowUsers(!showUsers)}
+                        className={`toggle-users-btn ${showUsers ? "active" : ""}`}
+                        title={showUsers ? "Ocultar usuarios" : "Mostrar usuarios"}
+                    >
+                        {showUsers ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showUsers ? "Ocultar Usuarios" : "Mostrar Usuarios"}
+                    </button>
                 </div>
-                <div className="seat-legend-item">
-                    <div className="seat-legend-color seat-selected"></div>
-                    <span>Seleccionado</span>
-                </div>
-                <div className="seat-legend-item">
-                    <div className="seat-legend-color seat-occupied"></div>
-                    <span>Ocupado</span>
-                </div>
-                <div className="seat-legend-item">
-                    <div className="seat-legend-color seat-blocked"></div>
-                    <span>Bloqueado</span>
+
+                <div className="seat-legend">
+                    <div className="legend-item">
+                        <div className="seat available"></div>
+                        <span>Disponible</span>
+                    </div>
+                    <div className="legend-item">
+                        <div className="seat selected"></div>
+                        <span>Seleccionado</span>
+                    </div>
+                    <div className="legend-item">
+                        <div className="seat purchased"></div>
+                        <span>Comprado</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="seat-stage">ESCENARIO</div>
+            <div className="seat-selector-stage">
+                <div className="stage">ESCENARIO</div>
+            </div>
 
-            <div className="seats-grid">
-                {seatGrid.rows.map((row, rowIndex) => (
-                    <div key={rowIndex} className="seat-row">
-                        <span className="seat-row-label">{getRowLabel(row.row)}</span>
-                        <div className="seat-row-buttons">
-                            {row.seats.map((seat) => (
-                                <button
-                                    key={`${seat.row}-${seat.column}`}
-                                    className={getSeatClass(seat)}
-                                    onClick={() => handleSeatClick(seat)}
-                                    disabled={seat.type !== "Disponible" && !selectedSeats.includes(`${seat.row}-${seat.column}`)}
-                                    title={`Fila ${getRowLabel(seat.row)}, Asiento ${seat.column} (${seat.type}) - Posicion: ${calculateSeatPosition(seat.row - 1, seat.column - 1)}`}
-                                >
-                                    {seat.column}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ))}
+            <div className="seat-grid">{renderSeatGrid()}</div>
+
+            <div className="seat-statistics">
+                <div className="stat-item">
+                    <Users size={16} />
+                    <span>Total: {evento.rows * evento.seatsPerRow}</span>
+                </div>
+                <div className="stat-item available">
+                    <span>Disponibles: {evento.rows * evento.seatsPerRow - purchasedSeats.length}</span>
+                </div>
+                <div className="stat-item purchased">
+                    <span>Comprados: {purchasedSeats.length}</span>
+                </div>
             </div>
 
             {selectedSeats.length > 0 && (
-                <div className="selected-seats-summary">
-                    <h4 className="selected-seats-count">Asientos seleccionados: {selectedSeats.length}</h4>
+                <div className="seat-selector-summary">
+                    <h4>Asientos Seleccionados: {selectedSeats.length}</h4>
                     <div className="selected-seats-list">
-                        {selectedSeats.map((seat) => {
-                            const [row, column] = seat.split("-").map(Number)
-                            const position = calculateSeatPosition(row - 1, column - 1)
+                        {selectedSeats.map((seatId) => {
+                            const [row, column] = seatId.split("-").map(Number)
+                            const seatNumber = (row + 1) * (column + 1)
                             return (
-                                <span key={seat} className="selected-seat-tag">
-                                    Fila {getRowLabel(row)}, Asiento {column} (Pos: {position})
+                                <span key={seatId} className="selected-seat-tag">
+                                    Fila {row + 1}, Asiento {column + 1} (Nº {seatNumber})
                                 </span>
                             )
                         })}
                     </div>
-                    <div className="selected-seats-total">
-                        Total: ₡{(selectedSeats.length * (evento.precio || 15000)).toLocaleString()}
+                </div>
+            )}
+
+            {showUsers && Object.keys(seatOwners).length > 0 && (
+                <div className="users-list">
+                    <h4>Usuarios con Asientos Comprados:</h4>
+                    <div className="users-grid">
+                        {Object.entries(seatOwners).map(([seatKey, owner]) => {
+                            const [row, column] = seatKey.split("-").map(Number)
+                            const seatNumber = (row + 1) * (column + 1)
+                            return (
+                                <div key={seatKey} className="user-item">
+                                    <div className="user-avatar">{owner.userName.charAt(0).toUpperCase()}</div>
+                                    <div className="user-info">
+                                        <span className="user-name">{owner.userName}</span>
+                                        <span className="user-seat">
+                                            Fila {row + 1}, Asiento {column + 1} (Nº {seatNumber})
+                                        </span>
+                                        {owner.userEmail && <span className="user-email">{owner.userEmail}</span>}
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             )}

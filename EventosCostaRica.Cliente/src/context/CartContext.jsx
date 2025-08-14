@@ -1,90 +1,129 @@
-"use client"
+ï»¿"use client"
 
 import { createContext, useContext, useState, useEffect } from "react"
 
-const CartContext = createContext(null)
+const CartContext = createContext()
+
+export const useCart = () => {
+    const context = useContext(CartContext)
+    if (!context) {
+        throw new Error("useCart must be used within a CartProvider")
+    }
+    return context
+}
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const storedCartItems = localStorage.getItem("cartItems")
-      return storedCartItems ? JSON.parse(storedCartItems) : []
-    } catch (error) {
-      console.error("Failed to parse cart items from localStorage:", error)
-      return []
+    const [cartItems, setCartItems] = useState([])
+
+    useEffect(() => {
+        loadCartFromStorage()
+    }, [])
+
+    useEffect(() => {
+        saveCartToStorage()
+    }, [cartItems])
+
+    const loadCartFromStorage = () => {
+        try {
+            const savedCart = localStorage.getItem("cartItems")
+            if (savedCart) {
+                setCartItems(JSON.parse(savedCart))
+            }
+        } catch (error) {
+            console.error("Error loading cart from storage:", error)
+        }
     }
-  })
-  const [selectedSeats, setSelectedSeats] = useState([]) // Asientos seleccionados para el evento actual
 
-  useEffect(() => {
-    localStorage.setItem("cartItems", JSON.stringify(cartItems))
-  }, [cartItems])
-
-  // Función para agregar un evento y sus asientos al carrito
-  const addToCart = (evento, seats) => {
-    // Generar un ID único para el grupo de boletos (evento + asientos específicos)
-    // Esto permite tener el mismo evento con diferentes selecciones de asientos como ítems separados
-    const itemId = `${evento.id}-${JSON.stringify(seats.sort((a, b) => a.fila - b.fila || a.columna - b.columna))}`
-
-    const existingItemIndex = cartItems.findIndex((item) => item.id === itemId)
-
-    if (existingItemIndex > -1) {
-      // Si ya existe un ítem con la misma selección de asientos, no se agrega de nuevo
-      // Podrías manejar esto de otra forma si quieres permitir múltiples compras de los mismos asientos
-      console.warn("Estos asientos ya están en el carrito para este evento.")
-      return
-    } else {
-      const newItem = {
-        id: itemId,
-        evento: evento,
-        seats: seats,
-        quantity: seats.length,
-        totalPrice: evento.precio * seats.length,
-      }
-      setCartItems((prevItems) => [...prevItems, newItem])
+    const saveCartToStorage = () => {
+        try {
+            localStorage.setItem("cartItems", JSON.stringify(cartItems))
+        } catch (error) {
+            console.error("Error saving cart to storage:", error)
+        }
     }
-    setSelectedSeats([]) // Limpiar asientos seleccionados después de agregar al carrito
-  }
 
-  // Función para remover un ítem del carrito por su ID
-  const removeFromCart = (itemId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId))
-  }
+    const addToCart = (evento, seats) => {
+        try {
+            const newItems = seats.map((seat) => ({
+                id: `${evento.id}-${seat.fila}-${seat.columna}`,
+                eventoId: evento.id,
+                eventoName: evento.name,
+                eventoDate: evento.eventoDate,
+                eventoLocation: evento.location,
+                fila: seat.fila,
+                columna: seat.columna,
+                precio: evento.precio || 15000,
+                addedAt: new Date().toISOString(),
+            }))
 
-  // Función para vaciar todo el carrito
-  const clearCart = () => {
-    setCartItems([])
-    setSelectedSeats([]) // También limpiar asientos seleccionados
-  }
+            // Verificar si algÃºn asiento ya estÃ¡ en el carrito
+            const duplicates = newItems.filter((newItem) => cartItems.some((existingItem) => existingItem.id === newItem.id))
 
-  // Función para obtener el número total de ítems (grupos de boletos) en el carrito
-  const getTotalItems = () => {
-    return cartItems.length
-  }
+            if (duplicates.length > 0) {
+                return {
+                    success: false,
+                    message: "Algunos asientos ya estÃ¡n en tu carrito",
+                }
+            }
 
-  // Función para obtener el precio total de todos los boletos en el carrito
-  const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + item.totalPrice, 0)
-  }
+            setCartItems((prev) => [...prev, ...newItems])
+            return {
+                success: true,
+                message: `${newItems.length} asiento(s) agregado(s) al carrito`,
+            }
+        } catch (error) {
+            console.error("Error adding to cart:", error)
+            return {
+                success: false,
+                message: "Error al agregar al carrito",
+            }
+        }
+    }
 
-  return (
-    <CartContext.Provider
-      value={{
+    const removeFromCart = (itemId) => {
+        setCartItems((prev) => prev.filter((item) => item.id !== itemId))
+    }
+
+    const clearCart = () => {
+        setCartItems([])
+    }
+
+    const getTotalItems = () => {
+        return cartItems.length
+    }
+
+    const getTotalPrice = () => {
+        return cartItems.reduce((total, item) => total + item.precio, 0)
+    }
+
+    const getItemsByEvent = () => {
+        const grouped = {}
+        cartItems.forEach((item) => {
+            if (!grouped[item.eventoId]) {
+                grouped[item.eventoId] = {
+                    evento: {
+                        id: item.eventoId,
+                        name: item.eventoName,
+                        eventoDate: item.eventoDate,
+                        location: item.eventoLocation,
+                    },
+                    items: [],
+                }
+            }
+            grouped[item.eventoId].items.push(item)
+        })
+        return Object.values(grouped)
+    }
+
+    const value = {
         cartItems,
         addToCart,
         removeFromCart,
         clearCart,
         getTotalItems,
         getTotalPrice,
-        selectedSeats,
-        setSelectedSeats,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  )
-}
+        getItemsByEvent,
+    }
 
-export const useCart = () => {
-  return useContext(CartContext)
+    return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

@@ -1,361 +1,407 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useParams, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
-import { useCart } from "../context/CartContext"
-import { CreditCard, User, Mail, Phone, MapPin, Calendar, Clock, Ticket } from "lucide-react"
-import api from "../services/api"
+import { eventService, ticketService, getErrorMessage } from "../services/api"
+import { ArrowLeft, Calendar, MapPin, Users, CreditCard, CheckCircle, AlertCircle, Loader2, Ticket } from "lucide-react"
 import "./PurchaseTicket.css"
 
 const PurchaseTicket = () => {
-    const navigate = useNavigate()
     const { id } = useParams()
+    const location = useLocation()
+    const navigate = useNavigate()
     const { user } = useAuth()
-    const { selectedSeats, clearCart } = useCart()
 
-    const [evento, setEvento] = useState(null)
+    const [event, setEvent] = useState(null)
+    const [selectedSeats, setSelectedSeats] = useState([])
     const [loading, setLoading] = useState(true)
-    const [processing, setProcessing] = useState(false)
-
-    const [purchaseData, setPurchaseData] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        cardName: "",
-    })
+    const [purchasing, setPurchasing] = useState(false)
+    const [error, setError] = useState("")
+    const [success, setSuccess] = useState(false)
+    const [purchasedTickets, setPurchasedTickets] = useState([])
 
     useEffect(() => {
-        if (!user) {
-            navigate("/login")
-            return
+        if (id) {
+            loadEventDetails()
         }
 
-        if (selectedSeats.length === 0) {
-            alert("No has seleccionado asientos")
-            navigate(`/event/${id}`)
-            return
+        // Obtener asientos seleccionados del state de navegación
+        if (location.state?.selectedSeats) {
+            setSelectedSeats(location.state.selectedSeats)
+        } else {
+            // Si no hay asientos seleccionados, redirigir de vuelta
+            navigate(`/evento/${id}`)
         }
+    }, [id, location.state, navigate])
 
-        fetchEvento()
-    }, [id, user, selectedSeats, navigate])
-
-    const fetchEvento = async () => {
+    const loadEventDetails = async () => {
         try {
-            const response = await api.get(`/evento/${id}`)
-            setEvento(response.data)
+            setLoading(true)
+            setError("")
 
-            // Pre-llenar datos del usuario si están disponibles
-            if (user) {
-                setPurchaseData((prev) => ({
-                    ...prev,
-                    email: user.email || "",
-                    firstName: user.firstName || "",
-                    lastName: user.lastName || "",
-                }))
-            }
+            const eventData = await eventService.getById(id)
+            setEvent(eventData)
         } catch (error) {
-            console.error("Error fetching event:", error)
-            alert("Error al cargar el evento")
-            navigate("/")
+            console.error("Error loading event details:", error)
+            setError(getErrorMessage(error))
         } finally {
             setLoading(false)
         }
     }
 
-    const calculateSeatPosition = (row, column) => {
-        return (row + 1) * (column + 1)
-    }
+    const handlePurchase = async () => {
+        if (selectedSeats.length === 0) {
+            setError("No hay asientos seleccionados")
+            return
+        }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        setProcessing(true)
+        if (!event || !event.id) {
+            setError("Error: No se pudo cargar la información del evento")
+            return
+        }
+
+        if (!user) {
+            setError("Error: Usuario no autenticado correctamente")
+            return
+        }
 
         try {
-            // Crear boletos individuales para cada asiento seleccionado
-            const boletoPromises = selectedSeats.map((seatId) => {
-                const [row, column] = seatId.split("-").map(Number)
-                const position = calculateSeatPosition(row - 1, column - 1)
+            setPurchasing(true)
+            setError("")
 
-                return api.post("/boleto", {
-                    eventoId: Number.parseInt(id),
-                    seatRow: row,
-                    seatColumn: column,
-                    precio: evento.precio || 15000,
-                    // Información adicional del comprador
-                    compradorNombre: `${purchaseData.firstName} ${purchaseData.lastName}`,
-                    compradorEmail: purchaseData.email,
-                    compradorTelefono: purchaseData.phone,
-                })
-            })
+            console.log("=== INICIANDO PROCESO DE COMPRA ===")
+            console.log("Usuario:", user)
+            console.log("Evento:", event)
+            console.log("Asientos seleccionados:", selectedSeats)
 
-            const boletos = await Promise.all(boletoPromises)
+            const tickets = []
 
-            // Limpiar carrito después de compra exitosa
-            clearCart()
+            for (const seat of selectedSeats) {
+                console.log(`Comprando asiento: Fila ${seat.row + 1}, Columna ${seat.column + 1}`)
 
-            alert(`¡Compra realizada exitosamente! Se crearon ${boletos.length} boletos. Revisa tu email para los detalles.`)
-            navigate("/my-tickets")
+                // Validar datos del asiento antes de enviar
+                if (seat.row === undefined || seat.row === null || seat.row < 0) {
+                    throw new Error(`Fila inválida para asiento: ${seat.row}. Debe ser 0 o mayor.`)
+                }
+                if (seat.column === undefined || seat.column === null || seat.column < 0) {
+                    throw new Error(`Columna inválida para asiento: ${seat.column}. Debe ser 0 o mayor.`)
+                }
+
+                const ticketData = {
+                    eventoId: Number(event.id),
+                    seatRow: Number(seat.row),
+                    seatColumn: Number(seat.column),
+                }
+
+                console.log("Datos del boleto a enviar:", ticketData)
+                console.log(
+                    `Comprando asiento en posición [${seat.row}, ${seat.column}] (mostrado como Fila ${seat.row + 1}, Asiento ${seat.column + 1})`,
+                )
+
+                try {
+                    const ticket = await ticketService.create(ticketData)
+                    console.log("Boleto creado exitosamente:", ticket)
+
+                    tickets.push({
+                        ...ticket,
+                        displayRow: seat.row + 1,
+                        displayColumn: seat.column + 1,
+                    })
+                } catch (seatError) {
+                    console.error(`Error comprando asiento fila ${seat.row + 1}, columna ${seat.column + 1}:`, seatError)
+                    const errorMsg = getErrorMessage(seatError)
+                    throw new Error(`Error en asiento Fila ${seat.row + 1}, Asiento ${seat.column + 1}: ${errorMsg}`)
+                }
+            }
+
+            console.log("=== COMPRA COMPLETADA EXITOSAMENTE ===")
+            console.log("Boletos comprados:", tickets)
+
+            setPurchasedTickets(tickets)
+            setSuccess(true)
+
+            try {
+                await ticketService.refreshSeatStatus(event.id)
+            } catch (refreshError) {
+                console.warn("No se pudo refrescar el estado de asientos:", refreshError)
+            }
+
+            // Redirigir a mis boletos después de 3 segundos
+            setTimeout(() => {
+                navigate("/mis-boletos")
+            }, 3000)
         } catch (error) {
-            console.error("Error processing purchase:", error)
-            alert("Error al procesar la compra: " + (error.response?.data?.message || error.message))
+            console.error("=== ERROR EN PROCESO DE COMPRA ===", error)
+            const errorMessage = getErrorMessage(error)
+            setError(errorMessage)
         } finally {
-            setProcessing(false)
+            setPurchasing(false)
         }
     }
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString("es-CR", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        })
+        try {
+            return new Date(dateString).toLocaleDateString("es-CR", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
+        } catch (error) {
+            return "Fecha no disponible"
+        }
     }
 
     const formatTime = (dateString) => {
-        return new Date(dateString).toLocaleTimeString("es-CR", {
-            hour: "2-digit",
-            minute: "2-digit",
-        })
+        try {
+            return new Date(dateString).toLocaleTimeString("es-CR", {
+                hour: "2-digit",
+                minute: "2-digit",
+            })
+        } catch (error) {
+            return "Hora no disponible"
+        }
     }
 
-    const getRowLabel = (rowNumber) => {
-        return String.fromCharCode(64 + rowNumber) // A, B, C, etc.
-    }
+    const totalPrice = selectedSeats.length * 15000
 
     if (loading) {
         return (
             <div className="purchase-container">
-                <div className="loading-spinner"></div>
-                <p>Cargando información del evento...</p>
+                <div className="purchase-loading">
+                    <Loader2 size={48} className="animate-spin loading-icon" />
+                    <h3>Cargando información de compra</h3>
+                    <p>Preparando los detalles del evento...</p>
+                </div>
             </div>
         )
     }
 
-    if (!evento) {
+    if (success) {
         return (
             <div className="purchase-container">
-                <p>No se pudo cargar la información del evento.</p>
+                <div className="purchase-success">
+                    <CheckCircle size={64} className="success-icon" />
+                    <h2>¡Compra exitosa!</h2>
+                    <p>Tus boletos han sido comprados correctamente</p>
+
+                    <div className="success-details">
+                        <h3>Detalles de la compra:</h3>
+                        <div className="purchase-info">
+                            <div className="info-item">
+                                <strong>Evento:</strong> {event?.name}
+                            </div>
+                            <div className="info-item">
+                                <strong>Usuario:</strong> {user?.userName || user?.email}
+                            </div>
+                            <div className="info-item">
+                                <strong>Fecha:</strong> {formatDate(event?.eventoDate)}
+                            </div>
+                        </div>
+
+                        <h3>Boletos comprados:</h3>
+                        <div className="tickets-list">
+                            {purchasedTickets.map((ticket, index) => (
+                                <div key={ticket.id || index} className="ticket-item">
+                                    <Ticket size={20} />
+                                    <span>
+                                        Fila {ticket.displayRow}, Asiento {ticket.displayColumn}
+                                    </span>
+                                    <span className="ticket-price">₡15,000</span>
+                                    <small>ID: {ticket.id}</small>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="total-paid">
+                            <strong>Total pagado: ₡{Math.round(totalPrice * 1.13).toLocaleString()}</strong>
+                        </div>
+                    </div>
+
+                    <div className="success-actions">
+                        <button onClick={() => navigate("/mis-boletos")} className="btn btn-primary">
+                            Ver Mis Boletos
+                        </button>
+                        <button onClick={() => navigate("/")} className="btn btn-secondary">
+                            Volver al Inicio
+                        </button>
+                    </div>
+                </div>
             </div>
         )
     }
 
-    const totalAmount = selectedSeats.length * (evento.precio || 15000)
+    if (error && !event) {
+        return (
+            <div className="purchase-container">
+                <div className="purchase-error">
+                    <AlertCircle size={48} className="error-icon" />
+                    <h2>Error al cargar la información</h2>
+                    <p>{error}</p>
+                    <button onClick={() => navigate(-1)} className="btn btn-primary">
+                        <ArrowLeft size={16} />
+                        Volver
+                    </button>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="purchase-container">
+            {/* Header */}
             <div className="purchase-header">
-                <h1 className="purchase-title">Finalizar Compra</h1>
-                <p className="purchase-subtitle">Completa tu informacion para adquirir tus boletos</p>
+                <button onClick={() => navigate(-1)} className="back-btn">
+                    <ArrowLeft size={20} />
+                    Volver
+                </button>
+                <h1>Comprar Boletos</h1>
             </div>
 
             <div className="purchase-content">
-                <div className="purchase-form-section">
-                    <form onSubmit={handleSubmit} className="purchase-form">
-                        <div className="form-section">
-                            <h2 className="section-title">
-                                <User className="section-icon" />
-                                Informacion Personal
-                            </h2>
+                {/* Event Summary */}
+                <div className="event-summary">
+                    <h2>Resumen del Evento</h2>
 
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Nombre</label>
-                                    <input
-                                        type="text"
-                                        value={purchaseData.firstName}
-                                        onChange={(e) => setPurchaseData({ ...purchaseData, firstName: e.target.value })}
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Apellidos</label>
-                                    <input
-                                        type="text"
-                                        value={purchaseData.lastName}
-                                        onChange={(e) => setPurchaseData({ ...purchaseData, lastName: e.target.value })}
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
+                    <div className="event-info">
+                        <h3>{event?.name || "Evento sin nombre"}</h3>
+
+                        <div className="event-details">
+                            <div className="detail-item">
+                                <Calendar size={16} />
+                                <span>
+                                    {formatDate(event?.eventoDate)} - {formatTime(event?.eventoDate)}
+                                </span>
                             </div>
 
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">
-                                        <Mail className="form-icon" />
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={purchaseData.email}
-                                        onChange={(e) => setPurchaseData({ ...purchaseData, email: e.target.value })}
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">
-                                        <Phone className="form-icon" />
-                                        Telefono
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={purchaseData.phone}
-                                        onChange={(e) => setPurchaseData({ ...purchaseData, phone: e.target.value })}
-                                        className="form-input"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="form-section">
-                            <h2 className="section-title">
-                                <CreditCard className="section-icon" />
-                                Informacion de Pago
-                            </h2>
-
-                            <div className="form-group">
-                                <label className="form-label">Nombre en la Tarjeta</label>
-                                <input
-                                    type="text"
-                                    value={purchaseData.cardName}
-                                    onChange={(e) => setPurchaseData({ ...purchaseData, cardName: e.target.value })}
-                                    className="form-input"
-                                    required
-                                />
+                            <div className="detail-item">
+                                <MapPin size={16} />
+                                <span>{event?.location || "Sin ubicación"}</span>
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Numero de Tarjeta</label>
-                                <input
-                                    type="text"
-                                    value={purchaseData.cardNumber}
-                                    onChange={(e) => setPurchaseData({ ...purchaseData, cardNumber: e.target.value })}
-                                    className="form-input"
-                                    placeholder="1234 5678 9012 3456"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Fecha de Vencimiento</label>
-                                    <input
-                                        type="text"
-                                        value={purchaseData.expiryDate}
-                                        onChange={(e) => setPurchaseData({ ...purchaseData, expiryDate: e.target.value })}
-                                        className="form-input"
-                                        placeholder="MM/AA"
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">CVV</label>
-                                    <input
-                                        type="text"
-                                        value={purchaseData.cvv}
-                                        onChange={(e) => setPurchaseData({ ...purchaseData, cvv: e.target.value })}
-                                        className="form-input"
-                                        placeholder="123"
-                                        maxLength="3"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" className={`purchase-btn ${processing ? "processing" : ""}`} disabled={processing}>
-                            {processing ? (
-                                <>
-                                    <div className="spinner"></div>
-                                    Procesando Pago...
-                                </>
-                            ) : (
-                                <>
-                                    <CreditCard className="btn-icon" />
-                                    Pagar ₡{totalAmount.toLocaleString()}
-                                </>
-                            )}
-                        </button>
-                    </form>
-                </div>
-
-                <div className="purchase-summary-section">
-                    <div className="summary-card">
-                        <h2 className="summary-title">Resumen de Compra</h2>
-
-                        <div className="event-summary">
-                            <h3 className="event-name">{evento.nombre}</h3>
-
-                            <div className="event-details">
-                                <div className="event-detail">
-                                    <Calendar className="detail-icon" />
-                                    <span>{formatDate(evento.fechaEvento)}</span>
-                                </div>
-                                <div className="event-detail">
-                                    <Clock className="detail-icon" />
-                                    <span>{formatTime(evento.fechaEvento)}</span>
-                                </div>
-                                <div className="event-detail">
-                                    <MapPin className="detail-icon" />
-                                    <span>{evento.ubicacion}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="seats-summary">
-                            <h4 className="seats-title">
-                                <Ticket className="seats-icon" />
-                                Asientos Seleccionados
-                            </h4>
-                            <div className="seats-list">
-                                {selectedSeats.map((seatId, index) => {
-                                    const [row, column] = seatId.split("-").map(Number)
-                                    const position = calculateSeatPosition(row - 1, column - 1)
-                                    return (
-                                        <div key={index} className="seat-item">
-                                            <span className="seat-label">
-                                                Fila {getRowLabel(row)}, Asiento {column} (Pos: {position})
-                                            </span>
-                                            <span className="seat-price">₡{(evento.precio || 15000).toLocaleString()}</span>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
-
-                        <div className="price-breakdown">
-                            <div className="price-row">
-                                <span>Subtotal ({selectedSeats.length} boletos)</span>
-                                <span>₡{totalAmount.toLocaleString()}</span>
-                            </div>
-                            <div className="price-row">
-                                <span>Cargos por servicio</span>
-                                <span>₡0</span>
-                            </div>
-                            <div className="price-row total">
-                                <span>Total</span>
-                                <span>₡{totalAmount.toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        <div className="security-info">
-                            <div className="security-badge">
-                                <CreditCard className="security-icon" />
-                                <div>
-                                    <div className="security-title">Pago Seguro</div>
-                                    <div className="security-text">Transaccion protegida con SSL</div>
-                                </div>
+                            <div className="detail-item">
+                                <Users size={16} />
+                                <span>
+                                    {selectedSeats.length} asiento{selectedSeats.length > 1 ? "s" : ""}
+                                </span>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Selected Seats */}
+                <div className="selected-seats-section">
+                    <h2>Asientos Seleccionados</h2>
+
+                    <div className="seats-grid">
+                        {selectedSeats.map((seat, index) => (
+                            <div key={index} className="seat-card">
+                                <div className="seat-number">Fila {seat.row + 1}</div>
+                                <div className="seat-position">Asiento {seat.column + 1}</div>
+                                <div className="seat-price">₡15,000</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Payment Summary */}
+                <div className="payment-summary">
+                    <h2>Resumen de Pago</h2>
+
+                    <div className="price-breakdown">
+                        <div className="price-line">
+                            <span>Precio por asiento:</span>
+                            <span>₡15,000</span>
+                        </div>
+
+                        <div className="price-line">
+                            <span>Cantidad de asientos:</span>
+                            <span>{selectedSeats.length}</span>
+                        </div>
+
+                        <div className="price-line subtotal">
+                            <span>Subtotal:</span>
+                            <span>₡{totalPrice.toLocaleString()}</span>
+                        </div>
+
+                        <div className="price-line">
+                            <span>Impuestos (13%):</span>
+                            <span>₡{Math.round(totalPrice * 0.13).toLocaleString()}</span>
+                        </div>
+
+                        <div className="price-line total">
+                            <span>Total:</span>
+                            <span>₡{Math.round(totalPrice * 1.13).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="payment-method">
+                    <h2>Método de Pago</h2>
+
+                    <div className="payment-options">
+                        <div className="payment-option selected">
+                            <CreditCard size={24} />
+                            <div className="option-info">
+                                <h3>Tarjeta de Crédito/Débito</h3>
+                                <p>Pago seguro con tarjeta</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card-form">
+                        <div className="form-group">
+                            <label>Número de Tarjeta</label>
+                            <input type="text" placeholder="1234 5678 9012 3456" className="form-input" />
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Fecha de Vencimiento</label>
+                                <input type="text" placeholder="MM/AA" className="form-input" />
+                            </div>
+
+                            <div className="form-group">
+                                <label>CVV</label>
+                                <input type="text" placeholder="123" className="form-input" />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Nombre en la Tarjeta</label>
+                            <input type="text" placeholder="Juan Pérez" className="form-input" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                    <div className="alert alert-error">
+                        <AlertCircle size={16} />
+                        <span>{error}</span>
+                        <button onClick={() => setError("")} className="close-btn">
+                            ×
+                        </button>
+                    </div>
+                )}
+
+                {/* Purchase Button */}
+                <div className="purchase-actions">
+                    <button onClick={handlePurchase} disabled={purchasing} className="purchase-btn">
+                        {purchasing ? (
+                            <>
+                                <Loader2 size={20} className="animate-spin" />
+                                Procesando Compra...
+                            </>
+                        ) : (
+                            <>
+                                <CreditCard size={20} />
+                                Comprar Boletos - ₡{Math.round(totalPrice * 1.13).toLocaleString()}
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
         </div>

@@ -48,6 +48,16 @@
     background-color: var(--color-gray-400); /* Gray */
 }
 
+/* Nuevo estilo para asientos bloqueados ocultos */
+.seat-empty-space {
+    width: 2rem;
+    height: 2rem;
+    background: transparent;
+    border: none;
+    cursor: default;
+    visibility: hidden; /* Completamente invisible */
+}
+
 .seat-stage {
     background-color: var(--color-gray-800);
     color: #fff;
@@ -127,9 +137,17 @@
     color: #fff;
 }
 
+/* Mantengo el estilo original de seat-blocked para compatibilidad pero ahora los asientos bloqueados usan seat-empty-space */
 .seat-blocked {
     background-color: var(--color-gray-400);
     color: var(--color-gray-700);
+}
+
+/* Nuevo estilo para asientos comprados */
+.seat-purchased {
+    background-color: #ef4444;
+    color: #fff;
+    cursor: not-allowed;
 }
 
 .selected-seats-summary {

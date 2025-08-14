@@ -1,9 +1,17 @@
-"use client"
+﻿"use client"
 
 import { createContext, useContext, useState, useEffect } from "react"
-import { authAPI } from "../services/api"
+import { authService, getErrorMessage } from "../services/api"
 
-const AuthContext = createContext(null)
+const AuthContext = createContext()
+
+export const useAuth = () => {
+    const context = useContext(AuthContext)
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider")
+    }
+    return context
+}
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
@@ -11,104 +19,133 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        const token = localStorage.getItem("token")
-        const storedUser = localStorage.getItem("user")
-
-        if (token && storedUser) {
-            try {
-                setUser(JSON.parse(storedUser))
-                setIsAuthenticated(true)
-            } catch (e) {
-                console.error("Failed to parse user from localStorage", e)
-                localStorage.removeItem("token")
-                localStorage.removeItem("user")
-            }
-        }
-        setLoading(false)
+        checkAuthStatus()
     }, [])
 
-    const login = async (email, password) => {
+    const checkAuthStatus = () => {
         try {
-            const response = await authAPI.login({ email, password })
-            const { token } = response.data
+            const token = localStorage.getItem("authToken")
+            const userData = localStorage.getItem("userData")
 
-            if (token) {
-                localStorage.setItem("token", token)
-
-                // Obtener perfil del usuario despues del login
-                try {
-                    const profileResponse = await authAPI.getProfile()
-                    const userData = profileResponse.data
-                    localStorage.setItem("user", JSON.stringify(userData))
-                    setUser(userData)
-                    setIsAuthenticated(true)
-                    return true
-                } catch (profileError) {
-                    console.error("Error getting user profile:", profileError)
-                    // Si no se puede obtener el perfil, usar datos basicos
-                    const basicUser = { email }
-                    localStorage.setItem("user", JSON.stringify(basicUser))
-                    setUser(basicUser)
-                    setIsAuthenticated(true)
-                    return true
-                }
+            if (token && userData) {
+                const parsedUser = JSON.parse(userData)
+                setUser(parsedUser)
+                setIsAuthenticated(true)
             }
-            return false
         } catch (error) {
-            console.error("Login failed:", error)
-            setIsAuthenticated(false)
-            return false
+            console.error("Error checking auth status:", error)
+            logout()
+        } finally {
+            setLoading(false)
         }
     }
 
-    const register = async (userName, email, password, confirmPassword) => {
+    const login = async (email, password) => {
         try {
-            const response = await authAPI.register({
-                userName,
-                email,
-                password,
-                confirmPassword,
-            })
-            return response.status === 200
+            console.log("Attempting login with:", { email, password: "***" })
+            const response = await authService.login(email, password)
+            console.log("Login response:", response)
+
+            if (response && (response.token || response.user)) {
+                const token = response.token || response.accessToken
+                const userData = response.user || response
+
+                if (token) {
+                    localStorage.setItem("authToken", token)
+                    localStorage.setItem("userData", JSON.stringify(userData))
+                    setUser(userData)
+                    setIsAuthenticated(true)
+                    return { success: true, message: response.message || "Login exitoso" }
+                }
+            }
+
+            return { success: false, message: response.message || "Credenciales inválidas" }
         } catch (error) {
-            console.error("Registration failed:", error)
-            return false
+            console.error("Login error:", error)
+            const errorMessage = getErrorMessage(error)
+            return { success: false, message: errorMessage }
+        }
+    }
+
+    const register = async (userData) => {
+        try {
+            console.log("Attempting registration with:", {
+                ...userData,
+                password: "***",
+                confirmPassword: "***",
+            })
+
+            const response = await authService.register(userData)
+            console.log("Registration response:", response)
+
+            // Manejar diferentes formatos de respuesta exitosa
+            if (response) {
+                // Si la respuesta tiene token, es un registro con login automático
+                if (response.token || response.accessToken) {
+                    const token = response.token || response.accessToken
+                    const userInfo = response.user || response
+
+                    localStorage.setItem("authToken", token)
+                    localStorage.setItem("userData", JSON.stringify(userInfo))
+                    setUser(userInfo)
+                    setIsAuthenticated(true)
+                    return { success: true, message: response.message || "Registro exitoso. ¡Bienvenido!" }
+                }
+
+                // Si la respuesta solo confirma el registro sin login automático
+                if (response.success !== false && response.message !== undefined) {
+                    return { success: true, message: response.message || "Usuario registrado exitosamente" }
+                }
+
+                // Si la respuesta es exitosa pero sin estructura específica
+                if (response.id || response.userId || response.userName || response.email) {
+                    return { success: true, message: response.message || "Usuario registrado exitosamente" }
+                }
+
+                // Respuesta exitosa genérica
+                return { success: true, message: response.message || "Usuario registrado exitosamente" }
+            }
+
+            return { success: false, message: "Error en el registro" }
+        } catch (error) {
+            console.error("Registration error:", error)
+
+            // Si el error es 200 o 201 (éxito) pero axios lo trata como error
+            if (error.response?.status === 200 || error.response?.status === 201) {
+                const responseData = error.response.data
+                if (responseData) {
+                    return { success: true, message: responseData.message || "Usuario registrado exitosamente" }
+                }
+            }
+
+            const errorMessage = getErrorMessage(error)
+            return { success: false, message: errorMessage }
         }
     }
 
     const logout = async () => {
         try {
-            await authAPI.logout()
+            if (isAuthenticated) {
+                await authService.logout()
+            }
         } catch (error) {
-            console.error("Logout API call failed:", error)
+            console.warn("Logout API call failed:", error)
         } finally {
-            localStorage.removeItem("token")
-            localStorage.removeItem("user")
+            localStorage.removeItem("authToken")
+            localStorage.removeItem("userData")
             setUser(null)
             setIsAuthenticated(false)
         }
     }
 
-    const loadUserProfile = async () => {
-        if (isAuthenticated) {
-            try {
-                const response = await authAPI.getProfile()
-                setUser(response.data)
-                localStorage.setItem("user", JSON.stringify(response.data))
-            } catch (error) {
-                console.error("Failed to load user profile:", error)
-                logout()
-            }
-        }
+    const value = {
+        user,
+        isAuthenticated,
+        loading,
+        login,
+        register,
+        logout,
     }
 
-    return (
-        <AuthContext.Provider value={{ user, isAuthenticated, login, register, logout, loading, loadUserProfile }}>
-            {children}
-        </AuthContext.Provider>
-    )
-}
-
-export const useAuth = () => {
-    return useContext(AuthContext)
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
