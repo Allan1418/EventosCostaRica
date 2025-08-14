@@ -73,7 +73,7 @@ namespace EventosCostaRica.Business
             if (result.Succeeded)
             {
                 //Si el registro es exitoso, se le asigna el rol de usuario por defecto
-                await _userManager.AddToRoleAsync(usuario, "ADMIN");
+                await _userManager.AddToRoleAsync(usuario, "USER");
             }
             return result;
         }
@@ -111,13 +111,21 @@ namespace EventosCostaRica.Business
         public async Task<IEnumerable<UserDTO>> GetAllUserAsync()
         {
             var usuarios = await _repositoryUsuarios.GetAll();
+            var userDtos = new List<UserDTO>();//inicializa la lista para almacenar a los usuarios con los datos requeridos.
 
-            return usuarios.Select(u => new UserDTO
+            foreach (var usuario in usuarios)
             {
-                Id = u.Id,
-                UserName = u.UserName,
-                Email = u.Email
-            }).ToList(); 
+                var roles = await _userManager.GetRolesAsync(usuario);
+
+                userDtos.Add(new UserDTO
+                {
+                    Id = usuario.Id,
+                    UserName = usuario.UserName,
+                    Email = usuario.Email,
+                    Roles = roles.ToList() // Asigna la lista de roles al DTO
+                });
+            }
+            return userDtos;
         }
 
         public async Task Logout()
@@ -125,30 +133,35 @@ namespace EventosCostaRica.Business
             await Task.CompletedTask;
         }
 
+
         public async Task<UserDTO> LoggedUserDetailAsync()
         {
             
             // Obtiene el ID del usuario de los claims (NameIdentifier es el UserId)
             var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             var usuario = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(usuario);
 
             return new UserDTO
             {
                 Id = usuario.Id,
                 UserName = usuario.UserName,
-                Email = usuario.Email
+                Email = usuario.Email,
+                Roles = roles.ToList() //obtiene el rol
             };
         }
 
         public async Task<UserDTO> GetUserByIdAsync(string id)
         {
             var usuario = await _userManager.FindByIdAsync(id);
+            var roles = await _userManager.GetRolesAsync(usuario);
             if (usuario == null) return null;
             return new UserDTO
             {
                 Id = usuario.Id,
                 UserName = usuario.UserName,
-                Email = usuario.Email
+                Email = usuario.Email,
+                Roles = roles.ToList()
             };
         }
 

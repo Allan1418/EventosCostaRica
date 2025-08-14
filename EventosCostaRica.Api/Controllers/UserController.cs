@@ -76,7 +76,7 @@ namespace EventosCostaRica.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "ADMINISTRADOR")]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> GetUserById(string id)
         {
             var userDetail = await _usuarioService.GetUserByIdAsync(id);
