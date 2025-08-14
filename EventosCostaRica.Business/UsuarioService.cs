@@ -73,7 +73,7 @@ namespace EventosCostaRica.Business
             if (result.Succeeded)
             {
                 //Si el registro es exitoso, se le asigna el rol de usuario por defecto
-                await _userManager.AddToRoleAsync(usuario, "ADMIN");
+                await _userManager.AddToRoleAsync(usuario, "USER");
             }
             return result;
         }
@@ -125,18 +125,21 @@ namespace EventosCostaRica.Business
             await Task.CompletedTask;
         }
 
+
         public async Task<UserDTO> LoggedUserDetailAsync()
         {
             
             // Obtiene el ID del usuario de los claims (NameIdentifier es el UserId)
             var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             var usuario = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(usuario);
 
             return new UserDTO
             {
                 Id = usuario.Id,
                 UserName = usuario.UserName,
-                Email = usuario.Email
+                Email = usuario.Email,
+                Roles = roles.ToList() //obtiene el rol
             };
         }
 
