@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
-import { ticketService, authService, getErrorMessage } from "../services/api"
+import { authService } from "../services/api"
+import { useRoles } from "../hooks/useRoles"
+import RoleBasedComponent from "../components/RoleBasedComponent"
 import {
     User,
     Mail,
     Calendar,
-    MapPin,
     Ticket,
-    Clock,
     Users,
     Shield,
     AlertCircle,
@@ -22,9 +22,8 @@ import "./Profile.css"
 
 const Profile = () => {
     const { user, isAuthenticated } = useAuth()
+    const { hasPermission, isAdmin, PERMISSIONS } = useRoles()
     const [userProfile, setUserProfile] = useState(null)
-    const [tickets, setTickets] = useState([])
-    const [loading, setLoading] = useState(true)
     const [profileLoading, setProfileLoading] = useState(true)
     const [error, setError] = useState("")
     const [refreshing, setRefreshing] = useState(false)
@@ -32,7 +31,6 @@ const Profile = () => {
     useEffect(() => {
         if (isAuthenticated) {
             loadUserProfile()
-            loadTickets()
         }
     }, [isAuthenticated])
 
@@ -54,26 +52,10 @@ const Profile = () => {
         }
     }
 
-    const loadTickets = async () => {
-        try {
-            setLoading(true)
-            setError("")
-            const ticketsData = await ticketService.getMyTickets()
-            console.log("Tickets loaded:", ticketsData)
-            setTickets(Array.isArray(ticketsData) ? ticketsData : [])
-        } catch (error) {
-            console.error("Error loading tickets:", error)
-            setError(getErrorMessage(error))
-            setTickets([])
-        } finally {
-            setLoading(false)
-        }
-    }
-
     const handleRefresh = async () => {
         try {
             setRefreshing(true)
-            await Promise.all([loadUserProfile(), loadTickets()])
+            await loadUserProfile()
         } catch (error) {
             console.error("Error refreshing data:", error)
         } finally {
@@ -98,32 +80,40 @@ const Profile = () => {
         }
     }
 
-    const getRoleBadgeClass = (role) => {
-        switch (role?.toLowerCase()) {
-            case "admin":
-                return "role-badge admin"
-            case "user":
-            case "usuario":
-                return "role-badge user"
-            default:
-                return "role-badge default"
-        }
+    const getRoleBadgeClass = (roles) => {
+        if (!roles || roles.length === 0) return "role-badge user"
+
+        const roleArray = Array.isArray(roles) ? roles : [roles]
+
+        if (roleArray.includes("ADMIN")) return "role-badge admin"
+        return "role-badge user"
     }
 
-    const getRoleDisplayName = (role) => {
-        switch (role?.toLowerCase()) {
-            case "admin":
-                return "Administrador"
-            case "user":
-            case "usuario":
-                return "Usuario"
-            default:
-                return role || "Usuario"
-        }
+    const getRoleDisplayName = (roles) => {
+        if (!roles || roles.length === 0) return "Usuario"
+
+        const roleArray = Array.isArray(roles) ? roles : [roles]
+
+        if (roleArray.includes("ADMIN")) return "Administrador"
+        if (roleArray.includes("USER")) return "Usuario"
+
+        return roleArray[0] || "Usuario"
     }
 
     // Usar userProfile si está disponible, sino usar user del contexto
     const currentUser = userProfile || user
+
+    const navigateToUsers = () => {
+        window.location.href = "/usuarios"
+    }
+
+    const navigateToEvents = () => {
+        window.location.href = "/"
+    }
+
+    const navigateToTickets = () => {
+        window.location.href = "/mis-boletos"
+    }
 
     if (!isAuthenticated) {
         return (
@@ -154,9 +144,9 @@ const Profile = () => {
                                     <div className="avatar-circle">
                                         <User size={32} />
                                     </div>
-                                    <div className={getRoleBadgeClass(currentUser?.role)}>
+                                    <div className={getRoleBadgeClass(currentUser?.roles)}>
                                         <Shield size={12} />
-                                        {getRoleDisplayName(currentUser?.role)}
+                                        {getRoleDisplayName(currentUser?.roles)}
                                     </div>
                                 </div>
 
@@ -186,16 +176,6 @@ const Profile = () => {
                                         </div>
                                     </div>
 
-                                    <div className="detail-item">
-                                        <div className="detail-icon">
-                                            <Ticket size={16} />
-                                        </div>
-                                        <div className="detail-content">
-                                            <span className="detail-label">Boletos Totales</span>
-                                            <span className="detail-value">{tickets.length}</span>
-                                        </div>
-                                    </div>
-
                                     {currentUser?.id && (
                                         <div className="detail-item">
                                             <div className="detail-icon">
@@ -207,6 +187,18 @@ const Profile = () => {
                                             </div>
                                         </div>
                                     )}
+
+                                    <RoleBasedComponent requiredPermissions={[PERMISSIONS.VIEW_USERS]}>
+                                        <div className="detail-item">
+                                            <div className="detail-icon">
+                                                <Users size={16} />
+                                            </div>
+                                            <div className="detail-content">
+                                                <span className="detail-label">Rol</span>
+                                                <span className="detail-value">{getRoleDisplayName(currentUser?.roles)}</span>
+                                            </div>
+                                        </div>
+                                    </RoleBasedComponent>
                                 </div>
 
                                 <div className="user-actions">
@@ -214,22 +206,28 @@ const Profile = () => {
                                         <Settings size={16} />
                                         Configuración
                                     </button>
+                                    <RoleBasedComponent requiredPermissions={[PERMISSIONS.MANAGE_USERS]}>
+                                        <button onClick={navigateToUsers} className="btn btn-primary btn-sm">
+                                            <Users size={16} />
+                                            Panel Admin
+                                        </button>
+                                    </RoleBasedComponent>
                                 </div>
                             </>
                         )}
                     </div>
                 </div>
 
-                {/* Contenido principal - Boletos */}
+                {/* Contenido principal - Acciones de Cuenta */}
                 <div className="profile-main">
-                    <div className="tickets-section">
+                    <div className="profile-actions-section">
                         <div className="section-header">
                             <div className="header-content">
                                 <h3 className="section-title">
-                                    <Ticket className="section-icon" />
-                                    Mis Boletos
+                                    <User className="section-icon" />
+                                    Acciones de Cuenta
                                 </h3>
-                                <p className="section-subtitle">Gestiona y visualiza todos tus boletos de eventos</p>
+                                <p className="section-subtitle">Gestiona tu cuenta y accede a tus funciones</p>
                             </div>
                             <button
                                 onClick={handleRefresh}
@@ -246,7 +244,7 @@ const Profile = () => {
                             <div className="alert alert-error">
                                 <AlertCircle size={16} />
                                 <div className="alert-content">
-                                    <h4>Error al cargar boletos</h4>
+                                    <h4>Error al cargar perfil</h4>
                                     <p>{error}</p>
                                 </div>
                                 <button onClick={() => setError("")} className="close-btn">
@@ -255,79 +253,50 @@ const Profile = () => {
                             </div>
                         )}
 
-                        {loading ? (
-                            <div className="tickets-loading">
-                                <Loader2 size={32} className="animate-spin loading-icon" />
-                                <h4>Cargando boletos...</h4>
-                                <p>Obteniendo información de tus boletos</p>
-                            </div>
-                        ) : tickets.length === 0 ? (
-                            <div className="tickets-empty">
-                                <Ticket size={48} className="empty-icon" />
-                                <h4>No tienes boletos</h4>
-                                <p>Cuando compres boletos para eventos, aparecerán aquí.</p>
-                                <button className="btn btn-primary">
-                                    <Eye size={16} />
-                                    Ver Eventos Disponibles
+                        <RoleBasedComponent requiredPermissions={[PERMISSIONS.MANAGE_USERS]}>
+                            <div className="admin-section">
+                                <div className="admin-header">
+                                    <Shield size={24} className="admin-icon" />
+                                    <div>
+                                        <h4>Panel de Administración</h4>
+                                        <p>Acceso exclusivo para administradores</p>
+                                    </div>
+                                </div>
+                                <button onClick={navigateToUsers} className="btn btn-admin btn-lg">
+                                    <Users size={20} />
+                                    Gestionar Usuarios
+                                    <div className="btn-shine"></div>
                                 </button>
                             </div>
-                        ) : (
-                            <div className="tickets-grid">
-                                {tickets.map((ticket) => (
-                                    <div key={ticket.id} className="ticket-card">
-                                        <div className="ticket-header">
-                                            <div className="ticket-event-name">{ticket.evento?.name || "Evento sin nombre"}</div>
-                                            <div className="ticket-id">#{ticket.id}</div>
-                                        </div>
+                        </RoleBasedComponent>
 
-                                        <div className="ticket-content">
-                                            <div className="ticket-info-grid">
-                                                <div className="info-item">
-                                                    <Calendar size={14} />
-                                                    <div>
-                                                        <span className="info-label">Fecha</span>
-                                                        <span className="info-value">{formatDate(ticket.evento?.eventoDate)}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="info-item">
-                                                    <MapPin size={14} />
-                                                    <div>
-                                                        <span className="info-label">Ubicación</span>
-                                                        <span className="info-value">{ticket.evento?.location || "No especificada"}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="info-item">
-                                                    <Users size={14} />
-                                                    <div>
-                                                        <span className="info-label">Asiento</span>
-                                                        <span className="info-value">
-                                                            Fila {(ticket.seatRow || 0) + 1}, Asiento {(ticket.seatColumn || 0) + 1}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="info-item">
-                                                    <Clock size={14} />
-                                                    <div>
-                                                        <span className="info-label">Comprado</span>
-                                                        <span className="info-value">{formatDate(ticket.purchaseDate)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="ticket-footer">
-                                            <button className="btn btn-outline btn-sm">
-                                                <Eye size={14} />
-                                                Ver Detalles
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                        <div className="action-cards-grid">
+                            <div className="action-card primary-card" onClick={navigateToTickets}>
+                                <div className="action-icon">
+                                    <Ticket size={32} />
+                                </div>
+                                <div className="action-content">
+                                    <h4>Mis Boletos</h4>
+                                    <p>Ver y gestionar todos tus boletos de eventos</p>
+                                </div>
+                                <div className="action-arrow">
+                                    <Eye size={20} />
+                                </div>
                             </div>
-                        )}
+
+                            <div className="action-card secondary-card" onClick={navigateToEvents}>
+                                <div className="action-icon">
+                                    <Calendar size={32} />
+                                </div>
+                                <div className="action-content">
+                                    <h4>Explorar Eventos</h4>
+                                    <p>Descubre nuevos eventos y compra boletos</p>
+                                </div>
+                                <div className="action-arrow">
+                                    <Eye size={20} />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

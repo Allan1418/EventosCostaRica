@@ -4,9 +4,9 @@ import React from "react"
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
-import { ErrorProvider } from "./context/ErrorContext"
+import { ErrorProvider } from "./components/ErrorHandler"
 import { setErrorContext } from "./services/api"
-import { useError } from "./context/ErrorContext"
+import { useError } from "./components/ErrorHandler"
 import Layout from "./components/Layout/Layout"
 import ProtectedRoute from "./components/ProtectedRoute"
 import Home from "./pages/Home"
@@ -18,6 +18,7 @@ import EventDetail from "./pages/EventDetail"
 import PurchaseTicket from "./pages/PurchaseTicket"
 import UserList from "./pages/UserList"
 import Profile from "./pages/Profile"
+import MyTickets from "./pages/MyTickets"
 import "./App.css"
 
 function AppContent() {
@@ -38,11 +39,10 @@ function AppContent() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/evento/:id" element={<EventDetail />} />
 
-                        {/* Rutas protegidas */}
                         <Route
                             path="/crear-evento"
                             element={
-                                <ProtectedRoute>
+                                <ProtectedRoute adminOnly={true}>
                                     <CreateEvent />
                                 </ProtectedRoute>
                             }
@@ -50,11 +50,20 @@ function AppContent() {
                         <Route
                             path="/editar-evento/:id"
                             element={
-                                <ProtectedRoute>
+                                <ProtectedRoute adminOnly={true}>
                                     <EditEvent />
                                 </ProtectedRoute>
                             }
                         />
+                        <Route
+                            path="/usuarios"
+                            element={
+                                <ProtectedRoute adminOnly={true}>
+                                    <UserList />
+                                </ProtectedRoute>
+                            }
+                        />
+
                         <Route
                             path="/perfil"
                             element={
@@ -72,10 +81,10 @@ function AppContent() {
                             }
                         />
                         <Route
-                            path="/usuarios"
+                            path="/mis-boletos"
                             element={
                                 <ProtectedRoute>
-                                    <UserList />
+                                    <MyTickets />
                                 </ProtectedRoute>
                             }
                         />

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useRoles } from "../hooks/useRoles"
 import { eventService, getErrorMessage } from "../services/api"
 import EventCard from "../components/Events/EventCard"
 import { Search, Calendar, Filter, Plus, Sparkles, RefreshCw, MapPin, AlertCircle, Loader2 } from "lucide-react"
@@ -10,6 +11,7 @@ import "./Home.css"
 
 const Home = () => {
     const { user, isAuthenticated } = useAuth()
+    const { isAdmin } = useRoles()
     const [events, setEvents] = useState([])
     const [filteredEvents, setFilteredEvents] = useState([])
     const [loading, setLoading] = useState(true)
@@ -190,12 +192,6 @@ const Home = () => {
                             <RefreshCw size={16} />
                             Reintentar
                         </button>
-                        {isAuthenticated && (
-                            <Link to="/crear-evento" className="create-event-btn">
-                                <Plus size={16} />
-                                Crear Evento
-                            </Link>
-                        )}
                     </div>
                 </div>
             </div>
@@ -217,10 +213,12 @@ const Home = () => {
                     <div className="hero-actions">
                         {isAuthenticated ? (
                             <>
-                                <Link to="/crear-evento" className="hero-btn btn-primary">
-                                    <Plus size={20} />
-                                    Crear Evento
-                                </Link>
+                                {isAdmin() && (
+                                    <Link to="/crear-evento" className="hero-btn btn-primary">
+                                        <Plus size={20} />
+                                        Crear Evento
+                                    </Link>
+                                )}
                                 <Link to="/perfil" className="hero-btn btn-secondary">
                                     <Calendar size={20} />
                                     Mi Perfil
@@ -360,7 +358,7 @@ const Home = () => {
                             </p>
                         </div>
 
-                        {isAuthenticated && (
+                        {isAdmin() && (
                             <Link to="/crear-evento" className="create-event-btn">
                                 <Plus className="create-icon" />
                                 Crear Evento
@@ -397,7 +395,7 @@ const Home = () => {
                                         Limpiar Filtros
                                     </button>
                                 )}
-                                {isAuthenticated && (
+                                {isAdmin() && (
                                     <Link to="/crear-evento" className="btn btn-primary">
                                         <Plus size={18} />
                                         {events.length === 0 ? "Crear Primer Evento" : "Crear Evento"}

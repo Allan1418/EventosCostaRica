@@ -1,8 +1,9 @@
 ﻿"use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useRoles } from "../hooks/useRoles"
 import { eventService, seatService, getErrorMessage } from "../services/api"
 import {
     Calendar,
@@ -27,6 +28,7 @@ import "./CreateEvent.css"
 const CreateEvent = () => {
     const navigate = useNavigate()
     const { user, isAuthenticated } = useAuth()
+    const { isAdmin } = useRoles()
     const [creating, setCreating] = useState(false)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
@@ -43,19 +45,38 @@ const CreateEvent = () => {
         seatsPerRow: 15,
     })
 
-    // Verificar autenticación
+    useEffect(() => {
+        if (!isAuthenticated) {
+            navigate("/login")
+            return
+        }
+
+        if (!isAdmin) {
+            navigate("/")
+            return
+        }
+    }, [isAuthenticated, isAdmin, navigate])
+
     if (!isAuthenticated) {
         return (
             <div className="create-event-container">
-                <div className="create-event-error">
-                    <div className="error-container">
-                        <AlertCircle size={48} className="error-icon" />
-                        <h3>Acceso Restringido</h3>
-                        <p>Debes iniciar sesión para crear eventos.</p>
-                        <button onClick={() => navigate("/login")} className="btn btn-primary">
-                            Iniciar Sesión
-                        </button>
-                    </div>
+                <div className="access-denied">
+                    <h2>Acceso Requerido</h2>
+                    <p>Debes iniciar sesión para acceder a esta página.</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="create-event-container">
+                <div className="access-denied">
+                    <h2>Acceso Denegado</h2>
+                    <p>Solo los administradores pueden crear eventos.</p>
+                    <button onClick={() => navigate("/")} className="btn btn-primary">
+                        Volver al Inicio
+                    </button>
                 </div>
             </div>
         )
@@ -65,7 +86,7 @@ const CreateEvent = () => {
         const { name, value, type } = e.target
         setFormData((prev) => ({
             ...prev,
-            [name]: type === "number" ? Math.max(1, Math.min(100, Number(value) || 1)) : value,
+            [name]: type === "number" ? Number(value) || 1 : value,
         }))
 
         // Clear messages when user starts typing
@@ -73,64 +94,9 @@ const CreateEvent = () => {
         if (success) setSuccess("")
     }
 
-    const validateStep1 = () => {
-        if (!formData.name.trim()) {
-            setError("El nombre del evento es requerido")
-            return false
-        }
-        if (formData.name.trim().length < 3) {
-            setError("El nombre del evento debe tener al menos 3 caracteres")
-            return false
-        }
-        if (!formData.descrp.trim()) {
-            setError("La descripción del evento es requerida")
-            return false
-        }
-        if (formData.descrp.trim().length < 10) {
-            setError("La descripción debe tener al menos 10 caracteres")
-            return false
-        }
-        if (!formData.eventoDate) {
-            setError("La fecha del evento es requerida")
-            return false
-        }
-        if (!formData.location.trim()) {
-            setError("La ubicación del evento es requerida")
-            return false
-        }
-        if (formData.location.trim().length < 3) {
-            setError("La ubicación debe tener al menos 3 caracteres")
-            return false
-        }
-
-        // Validar que la fecha sea en el futuro
-        const eventDate = new Date(formData.eventoDate)
-        const now = new Date()
-        if (eventDate <= now) {
-            setError("La fecha del evento debe ser en el futuro")
-            return false
-        }
-
-        // Validar dimensiones de la matriz
-        if (formData.rows < 1 || formData.rows > 100) {
-            setError("El número de filas debe estar entre 1 y 100")
-            return false
-        }
-        if (formData.seatsPerRow < 1 || formData.seatsPerRow > 100) {
-            setError("El número de asientos por fila debe estar entre 1 y 100")
-            return false
-        }
-
-        return true
-    }
-
     const handleNextStep = () => {
-        if (currentStep === 1) {
-            if (validateStep1()) {
-                setCurrentStep(2)
-                setError("")
-            }
-        }
+        setCurrentStep(2)
+        setError("")
     }
 
     const handlePreviousStep = () => {
@@ -165,15 +131,14 @@ const CreateEvent = () => {
         setSuccess("")
 
         try {
-            // Preparar datos del evento según el schema de la API
             const eventData = {
-                name: formData.name.trim(),
-                descrp: formData.descrp.trim(),
-                eventoDate: new Date(formData.eventoDate).toISOString(),
-                location: formData.location.trim(),
-                bannerImageUrl: formData.bannerImageUrl.trim() || "",
-                rows: Number(formData.rows),
-                seatsPerRow: Number(formData.seatsPerRow),
+                name: formData.name,
+                descrp: formData.descrp,
+                eventoDate: formData.eventoDate,
+                location: formData.location,
+                bannerImageUrl: formData.bannerImageUrl,
+                rows: formData.rows,
+                seatsPerRow: formData.seatsPerRow,
             }
 
             console.log("Creating event with data:", eventData)
@@ -185,11 +150,9 @@ const CreateEvent = () => {
                 throw new Error("No se pudo obtener el ID del evento creado")
             }
 
-            // Bloquear asientos seleccionados si hay alguno
             if (selectedSeats.length > 0) {
                 console.log("Blocking selected seats:", selectedSeats)
 
-                // Procesar asientos uno por uno para mejor manejo de errores
                 for (const seatKey of selectedSeats) {
                     try {
                         const [row, col] = seatKey.split("-").map(Number)
@@ -201,16 +164,11 @@ const CreateEvent = () => {
                         console.log(`Seat ${row}-${col} blocked successfully`)
                     } catch (seatError) {
                         console.warn(`Failed to block seat ${seatKey}:`, seatError)
-                        // Continuar con los demás asientos aunque uno falle
                     }
                 }
-
-                console.log("Seat blocking process completed")
             }
 
             setSuccess(`¡Evento "${formData.name}" creado exitosamente!`)
-
-            // Redirect after success
             setTimeout(() => {
                 navigate(`/evento/${eventId}`)
             }, 2000)
@@ -261,7 +219,6 @@ const CreateEvent = () => {
                 </div>
             </div>
 
-            {/* Progress Bar */}
             <div className="progress-bar">
                 <div className="progress-steps">
                     <div className={`progress-step ${currentStep >= 1 ? "active" : ""}`}>
@@ -276,7 +233,6 @@ const CreateEvent = () => {
                 </div>
             </div>
 
-            {/* Messages */}
             {error && (
                 <div className="alert alert-error">
                     <AlertCircle className="alert-icon" />
@@ -300,11 +256,9 @@ const CreateEvent = () => {
                 </div>
             )}
 
-            {/* Step 1: Event Information */}
             {currentStep === 1 && (
                 <div className="create-event-form">
                     <div className="form-sections">
-                        {/* Basic Information */}
                         <div className="form-section">
                             <div className="section-header">
                                 <FileText className="section-icon" />
@@ -346,7 +300,6 @@ const CreateEvent = () => {
                             </div>
                         </div>
 
-                        {/* Date and Location */}
                         <div className="form-section">
                             <div className="section-header">
                                 <Calendar className="section-icon" />
@@ -397,7 +350,6 @@ const CreateEvent = () => {
                             </div>
                         </div>
 
-                        {/* Seat Configuration */}
                         <div className="form-section">
                             <div className="section-header">
                                 <Users className="section-icon" />
@@ -461,7 +413,6 @@ const CreateEvent = () => {
                                 </div>
                             </div>
 
-                            {/* Preview Button */}
                             <div className="preview-section">
                                 <button
                                     type="button"
@@ -503,7 +454,6 @@ const CreateEvent = () => {
                             )}
                         </div>
 
-                        {/* Image */}
                         <div className="form-section">
                             <div className="section-header">
                                 <ImageIcon className="section-icon" />
@@ -553,7 +503,6 @@ const CreateEvent = () => {
                 </div>
             )}
 
-            {/* Step 2: Seat Configuration */}
             {currentStep === 2 && (
                 <div className="seat-configuration-step">
                     <div className="step-header">
@@ -564,7 +513,6 @@ const CreateEvent = () => {
                         </p>
                     </div>
 
-                    {/* Event Summary - Mejorado */}
                     <div className="event-summary-card">
                         <div className="summary-header">
                             <h3>
@@ -619,7 +567,6 @@ const CreateEvent = () => {
                         </div>
                     </div>
 
-                    {/* Seat Matrix */}
                     <div className="seat-matrix-section">
                         <div className="matrix-header">
                             <h3>
@@ -684,7 +631,6 @@ const CreateEvent = () => {
                         </div>
                     </div>
 
-                    {/* Selected Seats Summary - Mejorado */}
                     {selectedSeats.length > 0 && (
                         <div className="selected-seats-card">
                             <div className="selected-header">

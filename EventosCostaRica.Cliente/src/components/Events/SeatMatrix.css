@@ -26,6 +26,38 @@
     font-weight: 700;
 }
 
+/* Mejorando badge para vista admin con gradiente dorado */
+.admin-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    animation: adminBadgeGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes adminBadgeGlow {
+    0% {
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    100% {
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.6);
+    }
+}
+
+.matrix-dimensions {
+    color: #6b7280;
+    font-size: 16px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
 .matrix-subtitle {
     color: #6b7280;
     margin: 0;
@@ -154,7 +186,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -177,6 +209,13 @@
         border-color: #d97706;
     }
 
+    .seat-sample.blocked-admin {
+        background: #f97316;
+        color: white;
+        border-color: #ea580c;
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+    }
+
     .seat-sample.selected {
         background: #3b82f6;
         color: white;
@@ -189,7 +228,7 @@
         color: transparent;
     }
 
-/* Escenario */
+/* Mejorando escenario con efecto dorado más elegante */
 .stage {
     margin-bottom: 40px;
     display: flex;
@@ -197,28 +236,45 @@
 }
 
 .stage-content {
-    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
     color: white;
-    padding: 16px 64px;
-    border-radius: 32px;
-    font-weight: 800;
-    font-size: 18px;
-    letter-spacing: 3px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    padding: 20px 80px;
+    border-radius: 40px;
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: 4px;
+    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.4);
     position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.2);
 }
+
+    .stage-content::before {
+        content: "";
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+        border-radius: 40px;
+        z-index: -1;
+        filter: blur(8px);
+        opacity: 0.7;
+    }
 
     .stage-content::after {
         content: "";
         position: absolute;
-        bottom: -12px;
+        bottom: -16px;
         left: 50%;
         transform: translateX(-50%);
         width: 0;
         height: 0;
-        border-left: 12px solid transparent;
-        border-right: 12px solid transparent;
-        border-top: 12px solid #374151;
+        border-left: 16px solid transparent;
+        border-right: 16px solid transparent;
+        border-top: 16px solid #d97706;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
     }
 
 /* Matriz de asientos */
@@ -232,6 +288,7 @@
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border-radius: 16px;
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
 }
 
 .seat-row {
@@ -241,72 +298,76 @@
     justify-content: center;
 }
 
+/* Mejorando etiquetas de fila con mejor contraste */
 .row-label {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #374151, #1f2937);
+    background: linear-gradient(135deg, #1f2937, #374151);
     color: white;
-    border-radius: 8px;
-    font-weight: 800;
-    font-size: 16px;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 18px;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .seats-container {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: nowrap;
 }
 
+/* Mejorando asientos con mejor diseño y colores más vibrantes */
 .seat {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border: 3px solid transparent;
-    border-radius: 8px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
     .seat:hover:not(:disabled) {
-        transform: scale(1.15) translateY(-4px);
+        transform: scale(1.2) translateY(-6px);
         z-index: 10;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
     }
 
-    /* Colores fieles a la información */
     .seat.available {
-        background: #10b981;
+        background: linear-gradient(135deg, #10b981, #059669);
         color: white;
-        border-color: #059669;
+        border-color: #047857;
     }
 
         .seat.available:hover {
-            background: #059669;
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #059669, #047857);
+            box-shadow: 0 12px 32px rgba(16, 185, 129, 0.5);
         }
 
     .seat.occupied {
-        background: #ef4444;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
         color: white;
-        border-color: #dc2626;
+        border-color: #b91c1c;
         cursor: not-allowed;
     }
 
     .seat.blocked {
-        background: #f59e0b;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
         color: white;
-        border-color: #d97706;
+        border-color: #b45309;
     }
 
         .seat.blocked.editable {
@@ -314,20 +375,47 @@
         }
 
             .seat.blocked.editable:hover {
-                background: #d97706;
-                box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+                background: linear-gradient(135deg, #d97706, #b45309);
+                box-shadow: 0 12px 32px rgba(245, 158, 11, 0.5);
             }
 
-    .seat.selected {
-        background: #3b82f6;
+    .seat.blocked-admin {
+        background: linear-gradient(135deg, #f97316, #ea580c);
         color: white;
-        border-color: #2563eb;
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        border-color: #c2410c;
+        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+        animation: adminGlow 3s ease-in-out infinite alternate;
+    }
+
+        .seat.blocked-admin:hover {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+            box-shadow: 0 12px 32px rgba(249, 115, 22, 0.6);
+            transform: scale(1.2) translateY(-6px);
+        }
+
+    .seat.blocked-admin-view {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        color: white;
+        border-color: #c2410c;
+        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+        cursor: default;
+    }
+
+        .seat.blocked-admin-view:hover {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.5);
+        }
+
+    .seat.selected {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        border-color: #1d4ed8;
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
         animation: pulse 2s infinite;
     }
 
         .seat.selected:hover {
-            background: #2563eb;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
         }
 
     .seat.blocked-hidden {
@@ -338,18 +426,34 @@
         box-shadow: none;
     }
 
+    /* Asientos bloqueados invisibles mantienen espacio pero son completamente invisibles */
+    .seat.blocked-invisible {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
     .seat:disabled {
         cursor: not-allowed;
         opacity: 0.7;
     }
 
+@keyframes adminGlow {
+    0% {
+        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+    }
+
+    100% {
+        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.8);
+    }
+}
+
 @keyframes pulse {
     0%, 100% {
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
     }
 
     50% {
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.8);
     }
 }
 
@@ -423,6 +527,16 @@
         border: 2px solid #fecaca;
     }
 
+    .alert.alert-info {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 2px solid #bfdbfe;
+    }
+
+        .alert.alert-info svg {
+            color: #3b82f6;
+        }
+
 .close-btn {
     background: none;
     border: none;
@@ -438,6 +552,35 @@
     .close-btn:hover {
         background: rgba(0, 0, 0, 0.1);
     }
+
+/* Indicadores de columna */
+.column-indicators {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+    .column-indicators.bottom {
+        margin-top: 16px;
+        padding-left: 60px; /* Alineación con los asientos considerando el espacio del indicador de fila */
+    }
+
+.column-label {
+    width: 44px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -471,18 +614,35 @@
 
     .seat,
     .row-label {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
+        font-size: 11px;
+    }
+
+    /* Ajuste responsive para alineación de indicadores de columna */
+    .column-indicators.bottom {
+        padding-left: 52px;
+    }
+
+    /* Estilos responsive para indicadores de columna */
+    .column-label {
+        width: 36px;
+        height: 28px;
         font-size: 12px;
     }
 
     .seats-container {
-        gap: 4px;
+        gap: 6px;
     }
 
     .stage-content {
-        padding: 12px 32px;
-        font-size: 14px;
+        padding: 16px 48px;
+        font-size: 16px;
+    }
+
+    .admin-badge {
+        font-size: 10px;
+        padding: 2px 8px;
     }
 }
 
@@ -499,15 +659,27 @@
 
     .seat,
     .row-label {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
+        font-size: 10px;
+    }
+
+    /* Ajuste responsive para pantallas pequeñas */
+    .column-indicators.bottom {
+        padding-left: 48px;
+    }
+
+    /* Estilos responsive para pantallas pequeñas */
+    .column-label {
+        width: 32px;
+        height: 24px;
         font-size: 10px;
     }
 
     .seat-sample {
         width: 28px;
         height: 28px;
-        font-size: 12px;
+        font-size: 10px;
     }
 }
 

@@ -3,13 +3,16 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
-import { Menu, X, User, LogOut, Calendar, Users, Home, Sparkles, Settings, Bell } from "lucide-react"
+import { Menu, X, User, LogOut, Calendar, Sparkles, Ticket, Users } from "lucide-react"
 import "./Header.css"
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const { user, isAuthenticated, logout } = useAuth()
     const navigate = useNavigate()
+
+    console.log("[v0] Header - User:", user)
+    console.log("[v0] Header - User roles:", user?.roles)
 
     const handleLogout = async () => {
         try {
@@ -25,32 +28,41 @@ const Header = () => {
         setIsMenuOpen(false)
     }
 
-    const getRoleDisplayName = (role) => {
-        switch (role) {
-            case "Admin":
-                return "Administrador"
-            case "Usuario":
-                return "Usuario"
-            default:
-                return role || "Usuario"
-        }
+    const isAdmin = () => {
+        const userRoles = user?.roles || []
+        const adminCheck = Array.isArray(userRoles) && userRoles.includes("ADMIN")
+        console.log("[v0] Header - Admin check:", {
+            userRoles,
+            isArray: Array.isArray(userRoles),
+            includesAdmin: userRoles.includes("ADMIN"),
+            adminCheck,
+        })
+        return adminCheck
     }
 
-    const getRoleClass = (role) => {
-        switch (role) {
-            case "Admin":
-                return "admin"
-            case "Usuario":
-                return "user"
-            default:
-                return "user"
-        }
+    const getRoleDisplayName = (roles) => {
+        if (!roles || roles.length === 0) return "Usuario"
+        const roleArray = Array.isArray(roles) ? roles : [roles]
+        if (roleArray.includes("ADMIN")) return "Administrador"
+        return "Usuario"
+    }
+
+    const getRoleClass = (roles) => {
+        if (!roles || roles.length === 0) return "user"
+        const roleArray = Array.isArray(roles) ? roles : [roles]
+        if (roleArray.includes("ADMIN")) return "admin"
+        return "user"
+    }
+
+    const handleNavigation = (path) => {
+        navigate(path)
+        closeMenu()
     }
 
     return (
         <header className="header">
             <div className="header-container">
-                {/* Mejorando el logo con gradiente y animación */}
+                {/* Logo */}
                 <Link to="/" className="header-logo" onClick={closeMenu}>
                     <div className="logo-icon">
                         <div className="logo-gradient">
@@ -58,36 +70,40 @@ const Header = () => {
                         </div>
                     </div>
                     <div className="logo-text-container">
-                        <span className="logo-text">EventosCR    </span>
+                        <span className="logo-text">EventosCR</span>
                         <span className="logo-subtitle">Gestión de Eventos</span>
                     </div>
                 </Link>
 
                 {/* Desktop Navigation */}
                 <nav className="desktop-nav">
-                    <Link to="/" className="nav-link">
-                        <Home className="nav-icon" />
-                        <span>Inicio</span>
-                    </Link>
-
                     {isAuthenticated ? (
                         <>
-                            <Link to="/perfil" className="nav-link">
+                            <button onClick={() => handleNavigation("/perfil")} className="nav-link">
                                 <User className="nav-icon" />
                                 <span>Mi Perfil</span>
-                            </Link>
+                            </button>
 
-                            <Link to="/crear-evento" className="nav-link">
-                                <Calendar className="nav-icon" />
-                                <span>Crear Evento</span>
-                            </Link>
+                            <button onClick={() => handleNavigation("/mis-boletos")} className="nav-link">
+                                <Ticket className="nav-icon" />
+                                <span>Mis Boletos</span>
+                            </button>
 
-                            <Link to="/usuarios" className="nav-link">
-                                <Users className="nav-icon" />
-                                <span>Usuarios</span>
-                            </Link>
+                            {isAdmin() && (
+                                <>
+                                    <button onClick={() => handleNavigation("/crear-evento")} className="nav-link">
+                                        <Calendar className="nav-icon" />
+                                        <span>Crear Evento</span>
+                                    </button>
 
-                            {/* Mejorando el menú de usuario con dropdown */}
+                                    <button onClick={() => handleNavigation("/usuarios")} className="nav-link">
+                                        <Users className="nav-icon" />
+                                        <span>Usuarios</span>
+                                    </button>
+                                </>
+                            )}
+
+                            {/* User menu */}
                             <div className="user-menu">
                                 <div className="user-info">
                                     <div className="user-avatar">
@@ -98,7 +114,7 @@ const Header = () => {
                                     </div>
                                     <div className="user-details">
                                         <span className="user-name">{user?.userName || "Usuario"}</span>
-                                        <span className={`user-role ${getRoleClass(user?.role)}`}>{getRoleDisplayName(user?.role)}</span>
+                                        <span className={`user-role ${getRoleClass(user?.roles)}`}>{getRoleDisplayName(user?.roles)}</span>
                                     </div>
                                 </div>
                                 <div className="user-actions">
@@ -131,11 +147,6 @@ const Header = () => {
             {isMenuOpen && (
                 <div className="mobile-nav">
                     <div className="mobile-nav-content">
-                        <Link to="/" className="mobile-nav-link" onClick={closeMenu}>
-                            <Home className="nav-icon" />
-                            Inicio
-                        </Link>
-
                         {isAuthenticated ? (
                             <>
                                 <div className="mobile-user-info">
@@ -147,26 +158,35 @@ const Header = () => {
                                     </div>
                                     <div className="mobile-user-details">
                                         <span className="mobile-user-name">{user?.userName || "Usuario"}</span>
-                                        <span className={`mobile-user-role ${getRoleClass(user?.role)}`}>
-                                            {getRoleDisplayName(user?.role)}
+                                        <span className={`mobile-user-role ${getRoleClass(user?.roles)}`}>
+                                            {getRoleDisplayName(user?.roles)}
                                         </span>
                                     </div>
                                 </div>
 
-                                <Link to="/perfil" className="mobile-nav-link" onClick={closeMenu}>
+                                <button onClick={() => handleNavigation("/perfil")} className="mobile-nav-link">
                                     <User className="nav-icon" />
                                     Mi Perfil
-                                </Link>
+                                </button>
 
-                                <Link to="/crear-evento" className="mobile-nav-link" onClick={closeMenu}>
-                                    <Calendar className="nav-icon" />
-                                    Crear Evento
-                                </Link>
+                                <button onClick={() => handleNavigation("/mis-boletos")} className="mobile-nav-link">
+                                    <Ticket className="nav-icon" />
+                                    Mis Boletos
+                                </button>
 
-                                <Link to="/usuarios" className="mobile-nav-link" onClick={closeMenu}>
-                                    <Users className="nav-icon" />
-                                    Usuarios
-                                </Link>
+                                {isAdmin() && (
+                                    <>
+                                        <button onClick={() => handleNavigation("/crear-evento")} className="mobile-nav-link">
+                                            <Calendar className="nav-icon" />
+                                            Crear Evento
+                                        </button>
+
+                                        <button onClick={() => handleNavigation("/usuarios")} className="mobile-nav-link">
+                                            <Users className="nav-icon" />
+                                            Usuarios
+                                        </button>
+                                    </>
+                                )}
 
                                 <button onClick={handleLogout} className="mobile-nav-link logout">
                                     <LogOut className="nav-icon" />

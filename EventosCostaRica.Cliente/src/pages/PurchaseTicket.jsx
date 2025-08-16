@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useRoles } from "../hooks/useRoles"
 import { eventService, ticketService, getErrorMessage } from "../services/api"
 import { ArrowLeft, Calendar, MapPin, Users, CreditCard, CheckCircle, AlertCircle, Loader2, Ticket } from "lucide-react"
 import "./PurchaseTicket.css"
@@ -12,6 +13,7 @@ const PurchaseTicket = () => {
     const location = useLocation()
     const navigate = useNavigate()
     const { user } = useAuth()
+    const { hasPermission, PERMISSIONS } = useRoles()
 
     const [event, setEvent] = useState(null)
     const [selectedSeats, setSelectedSeats] = useState([])
@@ -51,6 +53,11 @@ const PurchaseTicket = () => {
     }
 
     const handlePurchase = async () => {
+        if (!hasPermission(PERMISSIONS.PURCHASE_TICKETS)) {
+            setError("No tienes permisos para comprar boletos")
+            return
+        }
+
         if (selectedSeats.length === 0) {
             setError("No hay asientos seleccionados")
             return

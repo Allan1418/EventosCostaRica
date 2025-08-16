@@ -3,15 +3,17 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
+import { useRoles } from "../../hooks/useRoles"
 import { Calendar, MapPin, Clock, Users, Edit, Eye, MoreVertical } from "lucide-react"
 import "./EventCard.css"
 
 const EventCard = ({ event }) => {
     const { isAuthenticated } = useAuth()
+    const { hasPermission } = useRoles()
     const [showActions, setShowActions] = useState(false)
     const [imageError, setImageError] = useState(false)
 
-    const canManage = isAuthenticated // Cualquier usuario autenticado puede gestionar eventos
+    const canManage = hasPermission("MANAGE_EVENTS")
 
     const formatDate = (dateString) => {
         try {
@@ -108,7 +110,6 @@ const EventCard = ({ event }) => {
                     {eventStatus.label}
                 </div>
 
-                {/* Admin Actions */}
                 {canManage && (
                     <div className="event-card-actions">
                         <button

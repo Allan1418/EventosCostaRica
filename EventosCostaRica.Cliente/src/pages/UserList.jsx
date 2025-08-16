@@ -2,14 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
+import { useRoles } from "../hooks/useRoles"
 import { authService, getErrorMessage } from "../services/api"
 import { Users, Mail, User, Shield, Calendar, RefreshCw } from "lucide-react"
 
 const UserList = () => {
     const { user, isAuthenticated } = useAuth()
+    const { hasPermission, isAdmin } = useRoles()
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
+
+    useEffect(() => {
+        console.log("[v0] UserList - Current user:", user)
+        console.log("[v0] UserList - Is authenticated:", isAuthenticated)
+        console.log("[v0] UserList - Is admin:", isAdmin)
+        console.log("[v0] UserList - Has MANAGE_USERS permission:", hasPermission("MANAGE_USERS"))
+        console.log("[v0] UserList - User roles:", user?.roles)
+    }, [user, isAuthenticated, isAdmin, hasPermission])
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -21,12 +31,12 @@ const UserList = () => {
         try {
             setLoading(true)
             setError("")
-            console.log("Loading users from API...")
+            console.log("[v0] Loading users from API...")
             const data = await authService.getUserList()
-            console.log("Users loaded successfully:", data)
+            console.log("[v0] Users loaded successfully:", data)
             setUsers(Array.isArray(data) ? data : [])
         } catch (error) {
-            console.error("Error loading users:", error)
+            console.error("[v0] Error loading users:", error)
             const errorMessage = getErrorMessage(error)
             setError(errorMessage)
             if (error.response?.status === 404) {
@@ -46,7 +56,8 @@ const UserList = () => {
         })
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !isAdmin) {
+        console.log("[v0] Access denied - isAuthenticated:", isAuthenticated, "isAdmin:", isAdmin)
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md w-full">
@@ -54,7 +65,15 @@ const UserList = () => {
                         <Shield className="w-8 h-8 text-red-600" />
                     </div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Acceso Denegado</h2>
-                    <p className="text-slate-600">Debes iniciar sesión para ver la lista de usuarios.</p>
+                    <p className="text-slate-600">Solo los administradores pueden ver la lista de usuarios.</p>
+                    <div className="mt-4 p-3 bg-gray-100 rounded text-sm text-left">
+                        <p>
+                            <strong>Debug Info:</strong>
+                        </p>
+                        <p>Autenticado: {isAuthenticated ? "Sí" : "No"}</p>
+                        <p>Es Admin: {isAdmin ? "Sí" : "No"}</p>
+                        <p>Roles: {JSON.stringify(user?.roles)}</p>
+                    </div>
                 </div>
             </div>
         )
@@ -129,7 +148,7 @@ const UserList = () => {
                             </div>
                             <div>
                                 <div className="text-3xl font-bold text-slate-800">
-                                    {users.filter((u) => u.role === "Admin").length}
+                                    {users.filter((u) => u.roles && u.roles.includes("ADMIN")).length}
                                 </div>
                                 <div className="text-slate-600 font-medium">Administradores</div>
                             </div>
@@ -169,7 +188,6 @@ const UserList = () => {
                                                     </div>
                                                     <div>
                                                         <div className="font-semibold text-slate-800">{userData.userName}</div>
-                                                        <div className="text-sm text-slate-500">ID: {userData.id}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -181,10 +199,12 @@ const UserList = () => {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span
-                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${userData.role === "Admin" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"
+                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${userData.roles && userData.roles.includes("ADMIN")
+                                                            ? "bg-purple-100 text-purple-800"
+                                                            : "bg-blue-100 text-blue-800"
                                                         }`}
                                                 >
-                                                    {userData.role || "Usuario"}
+                                                    {userData.roles && userData.roles.includes("ADMIN") ? "Administrador" : "Usuario"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-6">
