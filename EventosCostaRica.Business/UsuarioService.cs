@@ -23,6 +23,9 @@ namespace EventosCostaRica.Business
         Task Logout();
         Task<UserDTO> LoggedUserDetailAsync();
         Task<UserDTO> GetUserByIdAsync(string id);
+
+        Task<UserDTO> EditUserAsync(string idUserEdit, EditUserDto editDto, string loggedUserId);
+        Task<string> GetIdUserLogged();
     }
     public class UsuarioService : IUsuarioService
     {
@@ -163,6 +166,74 @@ namespace EventosCostaRica.Business
                 Email = usuario.Email,
                 Roles = roles.ToList()
             };
+        }
+
+        public async Task<UserDTO> EditUserAsync(string idUserEdit, EditUserDto editDto, string loggedUserId)
+        {
+            if (idUserEdit != editDto.Id)
+            { 
+                throw new ArgumentException("El ID del usuario a editar no coincide con el ID proporcionado en el DTO.");
+            }
+
+            var usertoUpdate = await _userManager.FindByIdAsync(editDto.Id);
+            if (usertoUpdate == null)
+            {
+                throw new KeyNotFoundException("Usuario no encontrado.");
+            }
+
+            usertoUpdate.Email = editDto.Email;
+            usertoUpdate.UserName = editDto.UserName;
+
+            var updateResult = await _userManager.UpdateAsync(usertoUpdate);
+            if(!updateResult.Succeeded)
+            {
+                throw new Exception("Error al actualizar el usuario: " + string.Join(", ", updateResult.Errors.Select(e => e.Description)));
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(usertoUpdate);
+            var rolesToAdd = editDto.Roles.Except(currentRoles).ToList();
+            var rolesToRemove = currentRoles.Except(editDto.Roles).ToList();
+
+            if (idUserEdit == loggedUserId)
+            {
+                if (rolesToRemove.Contains("ADMIN"))
+                {
+                    rolesToRemove.Remove("ADMIN");
+                }
+                if (rolesToAdd.Contains("ADMIN") && !currentRoles.Contains("ADMIN"))
+                {
+                    
+                }
+            }
+            if (rolesToRemove.Any())
+            {
+                var removeRolesResult = await _userManager.RemoveFromRolesAsync(usertoUpdate, rolesToRemove);
+                if (!removeRolesResult.Succeeded)
+                {
+                    return null;
+                }
+            }
+            if(rolesToAdd.Any())
+            {
+                var addRolesResult = await _userManager.AddToRolesAsync(usertoUpdate, rolesToAdd);
+                if (!addRolesResult.Succeeded)
+                {
+                    return null;
+                }
+            }
+            return await GetUserByIdAsync(usertoUpdate.Id);
+
+        }
+
+        //obtiene el ID del usuario loggeado actualmente
+        public async Task<string> GetIdUserLogged()
+        {
+            var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("No se pudo obtener el ID del usuario actual.");
+            }
+            return await Task.FromResult(userId);
         }
 
 

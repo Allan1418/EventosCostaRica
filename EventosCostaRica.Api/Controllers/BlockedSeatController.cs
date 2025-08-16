@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using EventosCostaRica.Business;
 using EventosCostaRica.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EventosCostaRica.Api.Controllers
 {
@@ -20,6 +21,7 @@ namespace EventosCostaRica.Api.Controllers
         //Elder
         // admin
         [HttpPost]
+        [Authorize(Roles = "ADMIN")]
         [ProducesResponseType(typeof(BlockedSeat), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -52,6 +54,7 @@ namespace EventosCostaRica.Api.Controllers
         //Elder
         // admin
         [HttpDelete]
+        [Authorize(Roles = "ADMIN")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -4,6 +4,7 @@ using EventosCostaRica.Data;
 using Microsoft.AspNetCore.Identity;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EventosCostaRica.Api.Controllers
 {
@@ -86,5 +87,23 @@ namespace EventosCostaRica.Api.Controllers
             }
             return Ok(userDetail);
         }
+
+        [HttpPut("edit/{id}")]
+        [Authorize (Roles = "ADMIN")]
+        public async Task<IActionResult> EditUser(string id, [FromBody] EditUserDto editDto)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return Unauthorized(new { message = "Usuario no autenticado." });
+            }
+            var updatedUser = await _usuarioService.EditUserAsync(id, editDto, currentUserId);
+            if (updatedUser == null)
+            {
+                return BadRequest(new { message = "Error al actualizar el usuario." });
+            }
+            return Ok(updatedUser);
+        }
+
     }
 }

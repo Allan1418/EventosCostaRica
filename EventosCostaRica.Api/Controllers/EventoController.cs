@@ -1,5 +1,6 @@
 ﻿using EventosCostaRica.Business;
 using EventosCostaRica.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,7 @@ namespace EventosCostaRica.Api.Controllers
         //Elder
         // admin
         [HttpPost]
+        [Authorize(Roles = "ADMIN")]
         [ProducesResponseType(typeof(EventoGetDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -109,6 +111,7 @@ namespace EventosCostaRica.Api.Controllers
         //Elder
         // admin
         [HttpPut("{id}")]
+        [Authorize(Roles = "ADMIN")]
         [ProducesResponseType(StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
