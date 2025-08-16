@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using EventosCostaRica.Business;
 using EventosCostaRica.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EventosCostaRica.Api.Controllers
 {
@@ -10,9 +11,11 @@ namespace EventosCostaRica.Api.Controllers
     public class BoletoController : ControllerBase
     {
         private readonly IBoletoService _boletoService;
-        public BoletoController(IBoletoService boletoService)
+        private readonly IUsuarioService _usuarioService;
+        public BoletoController(IBoletoService boletoService, IUsuarioService usuarioService)
         {
             _boletoService = boletoService;
+            _usuarioService = usuarioService;
         }
 
         // Ejemplo de insersion para probar los endpoints.
@@ -31,19 +34,17 @@ namespace EventosCostaRica.Api.Controllers
         );
         */
 
-        //Elder
-        // logeado
-        // cambie el userId por el del usuario que si esta logeado
         [HttpPost]
+        [Authorize]
         [ProducesResponseType(typeof(BoletoGetDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateBoleto([FromBody] BoletoCreateDTO boletoCreateDTO)
         {
             try
             {
-                var userId = "8e445865-a24d-4543-a6c6-9443d048cdb9";
+                var userId = await _usuarioService.GetIdUserLogged();
 
-                var nuevoBoleto = await _boletoService.Create(boletoCreateDTO, userId);
+                var nuevoBoleto = await _boletoService.Create(boletoCreateDTO,  userId);
                 return CreatedAtAction(nameof(GetBoletoById), new { id = nuevoBoleto.Id }, nuevoBoleto);
             }
             catch (ArgumentException ex)
@@ -57,8 +58,6 @@ namespace EventosCostaRica.Api.Controllers
         }
 
 
-        //Elder
-        // cualquiera
         [HttpGet("{id}", Name = "GetBoletoById")]
         [ProducesResponseType(typeof(BoletoGetDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -79,19 +78,17 @@ namespace EventosCostaRica.Api.Controllers
             }
         }
 
-
-        //Elder
-        // logeado
-        // cambie el userId por el del usuario que si esta logeado
         [HttpGet("mis-boletos")]
+        [Authorize]
         [ProducesResponseType(typeof(List<BoletoGetDTO>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetMisBoletos()
         {
             try
             {
-                var userId = "8e445865-a24d-4543-a6c6-9443d048cdb9";
+                var userId = await _usuarioService.GetIdUserLogged();
 
                 var boletos = await _boletoService.GetByUserId(userId);
+                
                 return Ok(boletos);
             }
             catch (Exception ex)
