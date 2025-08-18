@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext"
 import { useRoles } from "../hooks/useRoles"
 import { eventService, getErrorMessage } from "../services/api"
 import EventCard from "../components/Events/EventCard"
-import { Search, Calendar, Filter, Plus, Sparkles, RefreshCw, MapPin, AlertCircle, Loader2 } from "lucide-react"
+import { Search, Calendar, Filter, Plus, Sparkles, RefreshCw, AlertCircle, Loader2 } from "lucide-react"
 import "./Home.css"
 
 const Home = () => {
@@ -85,6 +85,11 @@ const Home = () => {
 
                 const eventDate = new Date(event.eventoDate)
                 eventDate.setHours(0, 0, 0, 0)
+
+                if (dateFilter.startsWith("specific-")) {
+                    const specificDate = new Date(dateFilter.replace("specific-", ""))
+                    return eventDate.getTime() === specificDate.getTime()
+                }
 
                 switch (dateFilter) {
                     case "today":
@@ -205,33 +210,30 @@ const Home = () => {
             {/* Hero Section */}
             <section className="hero-section">
                 <div className="hero-content">
-                    <h1 className="hero-title">Descubre Eventos Increíbles en Costa Rica</h1>
-                    <p className="hero-subtitle">
-                        Conecta con experiencias únicas, desde conciertos hasta conferencias. Tu próxima aventura te está esperando.
-                    </p>
+                    <h1 className="hero-title">Eventos Costa Rica</h1>
+                    <p className="hero-subtitle">Descubre y participa en los mejores eventos del país</p>
 
                     <div className="hero-actions">
                         {isAuthenticated ? (
                             <>
                                 {isAdmin() && (
                                     <Link to="/crear-evento" className="hero-btn btn-primary">
-                                        <Plus size={20} />
+                                        <Plus size={18} />
                                         Crear Evento
                                     </Link>
                                 )}
                                 <Link to="/perfil" className="hero-btn btn-secondary">
-                                    <Calendar size={20} />
+                                    <Calendar size={18} />
                                     Mi Perfil
                                 </Link>
                             </>
                         ) : (
                             <>
                                 <Link to="/register" className="hero-btn btn-primary">
-                                    <Sparkles size={20} />
-                                    Comenzar Ahora
+                                    <Sparkles size={18} />
+                                    Registrarse
                                 </Link>
                                 <Link to="/login" className="hero-btn btn-secondary">
-                                    <Calendar size={20} />
                                     Iniciar Sesión
                                 </Link>
                             </>
@@ -241,7 +243,7 @@ const Home = () => {
                     <div className="hero-stats">
                         <div className="hero-stat">
                             <span className="stat-number">{stats.total}</span>
-                            <span className="stat-label">Eventos Totales</span>
+                            <span className="stat-label">Eventos</span>
                         </div>
                         <div className="hero-stat">
                             <span className="stat-number">{stats.upcoming}</span>
@@ -254,7 +256,7 @@ const Home = () => {
                         {stats.today > 0 && (
                             <div className="hero-stat">
                                 <span className="stat-number">{stats.today}</span>
-                                <span className="stat-label">¡Hoy!</span>
+                                <span className="stat-label">Hoy</span>
                             </div>
                         )}
                     </div>
@@ -265,27 +267,18 @@ const Home = () => {
             <section className="search-section">
                 <div className="search-container">
                     <div className="search-header">
-                        <h2 className="search-title">Encuentra tu evento perfecto</h2>
-                        <p className="search-subtitle">Usa nuestros filtros para descubrir exactamente lo que buscas</p>
-
-                        <button
-                            onClick={refreshEvents}
-                            disabled={refreshing}
-                            className="refresh-events-btn"
-                            title="Actualizar eventos"
-                        >
-                            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-                            {refreshing ? "Actualizando..." : "Actualizar"}
-                        </button>
+                        <h2 className="search-title">Buscar Eventos</h2>
+                        <p className="search-subtitle">Encuentra el evento perfecto para ti</p>
                     </div>
 
                     <div className="search-filters">
-                        <div className="filters-grid">
+                        <div className="filters-row">
+                            {/* Search input */}
                             <div className="search-box">
-                                <Search className="search-icon" />
+                                <Search className="search-icon" size={18} />
                                 <input
                                     type="text"
-                                    placeholder="Buscar eventos, artistas, ubicaciones..."
+                                    placeholder="Buscar por nombre del evento..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="search-input"
@@ -297,48 +290,67 @@ const Home = () => {
                                 )}
                             </div>
 
+                            {/* Period filter only */}
                             <div className="filter-group">
-                                <label className="filter-label">
-                                    <MapPin className="filter-icon" />
-                                    Ubicación
-                                </label>
-                                <select
-                                    value={selectedLocation}
-                                    onChange={(e) => setSelectedLocation(e.target.value)}
-                                    className="filter-select"
-                                >
-                                    <option value="">Todas las ubicaciones</option>
-                                    {getUniqueLocations().map((location) => (
-                                        <option key={location} value={location}>
-                                            {location}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="filter-group">
-                                <label className="filter-label">
-                                    <Calendar className="filter-icon" />
-                                    Fecha
-                                </label>
+                                <label className="filter-label">Período</label>
                                 <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="filter-select">
                                     <option value="">Todas las fechas</option>
                                     <option value="today">Hoy</option>
                                     <option value="week">Esta semana</option>
                                     <option value="month">Este mes</option>
-                                    <option value="upcoming">Próximos</option>
+                                    <option value="upcoming">Próximos eventos</option>
                                 </select>
                             </div>
 
-                            <button
-                                onClick={clearFilters}
-                                className="clear-filters-btn"
-                                disabled={!searchTerm && !selectedLocation && !dateFilter}
-                            >
-                                <Filter className="clear-icon" />
-                                Limpiar
-                            </button>
+                            {/* Actions */}
+                            <div className="filter-actions">
+                                <button
+                                    onClick={clearFilters}
+                                    className="clear-filters-btn"
+                                    disabled={!searchTerm && !dateFilter}
+                                    title="Limpiar todos los filtros"
+                                >
+                                    <Filter size={16} />
+                                    Limpiar
+                                </button>
+
+                                <button
+                                    onClick={refreshEvents}
+                                    disabled={refreshing}
+                                    className="refresh-btn"
+                                    title="Actualizar eventos"
+                                >
+                                    <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+                                    {refreshing ? "..." : "Actualizar"}
+                                </button>
+                            </div>
                         </div>
+
+                        {(searchTerm || dateFilter) && (
+                            <div className="active-filters">
+                                <span className="active-filters-label">Filtros activos:</span>
+                                {searchTerm && (
+                                    <span className="filter-tag">
+                                        Búsqueda: "{searchTerm}"<button onClick={() => setSearchTerm("")}>×</button>
+                                    </span>
+                                )}
+                                {dateFilter && (
+                                    <span className="filter-tag">
+                                        Fecha:{" "}
+                                        {dateFilter === "today"
+                                            ? "Hoy"
+                                            : dateFilter === "week"
+                                                ? "Esta semana"
+                                                : dateFilter === "month"
+                                                    ? "Este mes"
+                                                    : dateFilter === "upcoming"
+                                                        ? "Próximos"
+                                                        : dateFilter}
+                                        <button onClick={() => setDateFilter("")}>×</button>
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -348,13 +360,9 @@ const Home = () => {
                 <div className="events-container">
                     <div className="events-header">
                         <div>
-                            <h2 className="events-title">
-                                {filteredEvents.length > 0 ? "Eventos Disponibles" : "No se encontraron eventos"}
-                            </h2>
+                            <h2 className="events-title">{filteredEvents.length > 0 ? "Eventos Disponibles" : "Sin Resultados"}</h2>
                             <p className="events-count">
                                 {filteredEvents.length} evento{filteredEvents.length !== 1 ? "s" : ""}
-                                {searchTerm || selectedLocation || dateFilter ? " encontrado" : " disponible"}
-                                {filteredEvents.length !== 1 ? "s" : ""}
                             </p>
                         </div>
 
@@ -382,23 +390,23 @@ const Home = () => {
                             <Calendar className="no-events-icon" />
                             <h3>No se encontraron eventos</h3>
                             <p>
-                                {searchTerm || selectedLocation || dateFilter
-                                    ? "Intenta cambiar los filtros de búsqueda para encontrar más eventos"
+                                {searchTerm || dateFilter
+                                    ? "Intenta cambiar los filtros de búsqueda"
                                     : events.length === 0
-                                        ? "Aún no hay eventos creados en la plataforma"
+                                        ? "Aún no hay eventos disponibles"
                                         : "Todos los eventos están filtrados"}
                             </p>
                             <div className="no-events-actions">
-                                {(searchTerm || selectedLocation || dateFilter) && (
+                                {(searchTerm || dateFilter) && (
                                     <button onClick={clearFilters} className="btn btn-secondary">
-                                        <Filter size={18} />
+                                        <Filter size={16} />
                                         Limpiar Filtros
                                     </button>
                                 )}
                                 {isAdmin() && (
                                     <Link to="/crear-evento" className="btn btn-primary">
-                                        <Plus size={18} />
-                                        {events.length === 0 ? "Crear Primer Evento" : "Crear Evento"}
+                                        <Plus size={16} />
+                                        Crear Evento
                                     </Link>
                                 )}
                             </div>

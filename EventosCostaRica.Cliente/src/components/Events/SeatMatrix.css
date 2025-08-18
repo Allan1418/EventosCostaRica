@@ -1,10 +1,50 @@
+/* Updated to use semantic design tokens and improved Costa Rican event platform styling */
 .seat-matrix-container {
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 32px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    margin: 24px 0;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-radius: 24px !important;
+    padding: 2.5rem !important;
+    border: 1px solid rgba(229, 231, 235, 0.8) !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.04) !important;
+    position: relative !important;
+    z-index: 10 !important;
+    margin: 32px auto !important;
+    overflow: visible !important;
+    width: fit-content !important;
+    max-width: calc(100% - 64px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+    .seat-matrix-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #15803d, #84cc16, #10b981, #059669);
+        border-radius: 24px 24px 0 0;
+        animation: gradientShift 8s ease-in-out infinite;
+    }
+
+@keyframes gradientShift {
+    0%, 100% {
+        background: linear-gradient(90deg, #15803d, #84cc16, #10b981, #059669);
+    }
+
+    25% {
+        background: linear-gradient(90deg, #84cc16, #10b981, #059669, #15803d);
+    }
+
+    50% {
+        background: linear-gradient(90deg, #10b981, #059669, #15803d, #84cc16);
+    }
+
+    75% {
+        background: linear-gradient(90deg, #059669, #15803d, #84cc16, #10b981);
+    }
 }
 
 /* Header */
@@ -14,6 +54,8 @@
     align-items: flex-start;
     margin-bottom: 32px;
     gap: 24px;
+    width: 100%;
+    justify-content: center;
 }
 
 .matrix-info h3 {
@@ -21,33 +63,40 @@
     align-items: center;
     gap: 12px;
     margin: 0 0 8px 0;
-    color: #111827;
-    font-size: 24px;
-    font-weight: 700;
+    color: #374151;
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #15803d, #059669);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-/* Mejorando badge para vista admin con gradiente dorado */
+/* Admin badge with Costa Rican green theme */
 .admin-badge {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, #84cc16, #65a30d, #4d7c0f);
     color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
+    padding: 6px 16px;
+    border-radius: 16px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-left: 8px;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    letter-spacing: 0.8px;
+    margin-left: 12px;
+    box-shadow: 0 4px 12px rgba(132, 204, 22, 0.4);
     animation: adminBadgeGlow 3s ease-in-out infinite alternate;
+    border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 @keyframes adminBadgeGlow {
     0% {
-        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        box-shadow: 0 4px 12px rgba(132, 204, 22, 0.4);
+        transform: scale(1);
     }
 
     100% {
-        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.6);
+        box-shadow: 0 6px 20px rgba(132, 204, 22, 0.7);
+        transform: scale(1.05);
     }
 }
 
@@ -89,28 +138,50 @@
 
     .toggle-btn:hover,
     .refresh-btn:hover {
-        border-color: #3b82f6;
-        background: #f8fafc;
+        border-color: #15803d;
+        background: #f0fdf4;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        box-shadow: 0 4px 12px rgba(21, 128, 61, 0.15);
     }
 
     .toggle-btn.active {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, #15803d, #059669);
         color: white;
-        border-color: #3b82f6;
+        border-color: #15803d;
     }
 
-/* Estadísticas */
+/* Instructions with Costa Rican theme */
+.matrix-instructions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+    margin-bottom: 2rem !important;
+    padding: 1rem !important;
+    background: rgba(240, 253, 244, 0.8) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(21, 128, 61, 0.1) !important;
+}
+
+.instruction-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    color: #374151 !important;
+    font-size: 0.9rem !important;
+}
+
+/* Statistics */
 .seat-statistics {
     display: flex;
     gap: 24px;
     margin-bottom: 32px;
     padding: 24px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     border-radius: 16px;
     flex-wrap: wrap;
     justify-content: center;
+    overflow-x: auto;
+    border: 1px solid rgba(21, 128, 61, 0.1);
 }
 
 .stat-item {
@@ -120,9 +191,11 @@
     padding: 16px 20px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     min-width: 120px;
     transition: transform 0.2s ease;
+    flex-shrink: 0;
+    border: 1px solid rgba(229, 231, 235, 0.5);
 }
 
     .stat-item:hover {
@@ -132,7 +205,7 @@
 .stat-number {
     font-size: 24px;
     font-weight: 800;
-    color: #111827;
+    color: #374151;
 }
 
 .stat-label {
@@ -142,31 +215,33 @@
 }
 
 .stat-item.available .stat-number {
-    color: #10b981;
+    color: #15803d;
 }
 
 .stat-item.occupied .stat-number {
-    color: #ef4444;
+    color: #dc2626;
 }
 
 .stat-item.blocked .stat-number {
-    color: #f59e0b;
+    color: #ff8c00;
 }
 
 .stat-item.selected .stat-number {
-    color: #3b82f6;
+    color: #059669;
 }
 
-/* Leyenda */
+/* Legend */
 .seat-legend {
     display: flex;
     gap: 32px;
     margin-bottom: 32px;
     padding: 24px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     border-radius: 16px;
     flex-wrap: wrap;
     justify-content: center;
+    overflow-x: auto;
+    border: 1px solid rgba(21, 128, 61, 0.1);
 }
 
 .legend-item {
@@ -176,6 +251,7 @@
     font-size: 16px;
     font-weight: 600;
     color: #374151;
+    flex-shrink: 0;
 }
 
 .seat-sample {
@@ -192,34 +268,34 @@
 }
 
     .seat-sample.available {
-        background: #10b981;
+        background: #15803d;
         color: white;
-        border-color: #059669;
+        border-color: #166534;
     }
 
     .seat-sample.occupied {
-        background: #ef4444;
+        background: #dc2626;
         color: white;
-        border-color: #dc2626;
+        border-color: #b91c1c;
     }
 
     .seat-sample.blocked {
-        background: #f59e0b;
+        background: #ff8c00;
         color: white;
-        border-color: #d97706;
+        border-color: #e55100;
     }
 
     .seat-sample.blocked-admin {
-        background: #f97316;
+        background: #ff8c00;
         color: white;
-        border-color: #ea580c;
-        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        border-color: #e55100;
+        box-shadow: 0 4px 12px rgba(255, 140, 0, 0.4);
     }
 
     .seat-sample.selected {
-        background: #3b82f6;
+        background: #059669;
         color: white;
-        border-color: #2563eb;
+        border-color: #047857;
     }
 
     .seat-sample.blocked-hidden {
@@ -228,233 +304,288 @@
         color: transparent;
     }
 
-/* Mejorando escenario con efecto dorado más elegante */
+/* Enhanced stage with Costa Rican elegance */
 .stage {
-    margin-bottom: 40px;
+    margin-bottom: 56px;
     display: flex;
     justify-content: center;
+    position: relative;
+    perspective: 1200px;
 }
 
 .stage-content {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
-    color: white;
-    padding: 20px 80px;
-    border-radius: 40px;
+    background: linear-gradient(135deg, #374151 0%, #4b5563 30%, #6b7280 70%, #9ca3af 100%);
+    color: #f9fafb;
+    padding: 28px 140px;
+    border-radius: 60px;
     font-weight: 900;
-    font-size: 20px;
-    letter-spacing: 4px;
-    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.4);
+    font-size: 28px;
+    letter-spacing: 8px;
+    box-shadow: 0 25px 50px rgba(55, 65, 81, 0.4), 0 12px 24px rgba(55, 65, 81, 0.25), inset 0 4px 8px rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba( 0, 0, 0, 0.2 );
     position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    border: 3px solid rgba(255, 255, 255, 0.2);
+    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+    border: 4px solid rgba(249, 250, 251, 0.25);
+    transform: perspective(1200px) rotateX(8deg) rotateY(-2deg);
+    transition: transform 0.3s ease;
 }
 
+    .stage-content:hover {
+        transform: perspective(1200px) rotateX(5deg) rotateY(0deg) scale(1.02);
+    }
+
     .stage-content::before {
+        content: "";
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        right: -8px;
+        bottom: -8px;
+        background: linear-gradient(135deg, #9ca3af, #6b7280, #4b5563, #374151);
+        border-radius: 60px;
+        z-index: -1;
+        filter: blur(16px);
+        opacity: 0.7;
+        animation: stageGlow 4s ease-in-out infinite alternate;
+    }
+
+@keyframes stageGlow {
+    0% {
+        opacity: 0.7;
+        filter: blur(16px);
+    }
+
+    100% {
+        opacity: 0.9;
+        filter: blur(20px);
+    }
+}
+
+/* Seat grid with Costa Rican theme */
+.seat-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    margin: 0 auto 48px auto !important;
+    overflow: visible !important;
+    padding: 40px !important;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
+    border-radius: 24px;
+    box-shadow: inset 0 6px 16px rgba(21, 128, 61, 0.08), inset 0 2px 4px rgba(21, 128, 61, 0.04), 0 6px 20px rgba(0, 0, 0, 0.05);
+    position: relative;
+    width: fit-content !important;
+    max-width: 100% !important;
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    z-index: 20 !important;
+    align-items: center !important;
+}
+
+.seat-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    justify-content: center !important;
+    min-width: fit-content;
+    flex-shrink: 0 !important;
+    position: relative;
+    z-index: 30 !important;
+}
+
+.seats-container {
+    display: flex !important;
+    gap: 10px !important;
+    flex-wrap: nowrap;
+    min-width: fit-content;
+    flex-shrink: 0 !important;
+    align-items: center;
+    position: relative;
+    z-index: 40 !important;
+    justify-content: center !important;
+}
+
+/* Enhanced seats with Costa Rican green theme */
+.seat {
+    width: 42px !important;
+    height: 42px !important;
+    border: 3px solid transparent;
+    border-radius: 16px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12), 0 3px 6px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0 !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    backdrop-filter: blur(12px);
+    margin: 0 !important;
+    z-index: 50 !important;
+}
+
+    .seat::before {
         content: "";
         position: absolute;
         top: -3px;
         left: -3px;
         right: -3px;
         bottom: -3px;
-        background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
-        border-radius: 40px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
         z-index: -1;
-        filter: blur(8px);
-        opacity: 0.7;
+        opacity: 0;
+        transition: opacity 0.4s ease;
     }
 
-    .stage-content::after {
-        content: "";
-        position: absolute;
-        bottom: -16px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 0;
-        border-left: 16px solid transparent;
-        border-right: 16px solid transparent;
-        border-top: 16px solid #d97706;
-        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    .seat:hover:not(:disabled)::before {
+        opacity: 1;
     }
-
-/* Matriz de asientos */
-.seat-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 32px;
-    overflow-x: auto;
-    padding: 24px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 16px;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
-    position: relative;
-}
-
-.seat-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    justify-content: center;
-}
-
-/* Mejorando etiquetas de fila con mejor contraste */
-.row-label {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #1f2937, #374151);
-    color: white;
-    border-radius: 12px;
-    font-weight: 900;
-    font-size: 18px;
-    flex-shrink: 0;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.seats-container {
-    display: flex;
-    gap: 8px;
-    flex-wrap: nowrap;
-}
-
-/* Mejorando asientos con mejor diseño y colores más vibrantes */
-.seat {
-    width: 44px;
-    height: 44px;
-    border: 3px solid transparent;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
 
     .seat:hover:not(:disabled) {
-        transform: scale(1.2) translateY(-6px);
-        z-index: 10;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+        transform: scale(1.2) translateY(-10px) rotateZ(3deg);
+        z-index: 100 !important;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2), 0 12px 24px rgba(0, 0, 0, 0.15), inset 0 3px 6px rgba(255, 255, 255, 0.3);
     }
 
     .seat.available {
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: linear-gradient(135deg, #15803d 0%, #166534 40%, #14532d 80%, #052e16 100%);
         color: white;
-        border-color: #047857;
+        border-color: #052e16;
     }
 
         .seat.available:hover {
-            background: linear-gradient(135deg, #059669, #047857);
-            box-shadow: 0 12px 32px rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, #166534 0%, #14532d 40%, #052e16 80%, #052e16 100%);
+            box-shadow: 0 25px 50px rgba(21, 128, 61, 0.4), 0 12px 24px rgba(21, 128, 61, 0.25), inset 0 3px 6px rgba(255, 255, 255, 0.3);
         }
 
     .seat.occupied {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
         color: white;
-        border-color: #b91c1c;
+        border-color: #7f1d1d;
         cursor: not-allowed;
     }
 
     .seat.blocked {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
+        background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%);
         color: white;
-        border-color: #b45309;
+        border-color: #e55100;
     }
 
-        .seat.blocked.editable {
-            cursor: pointer;
+        .seat.blocked.editable:hover {
+            background: linear-gradient(135deg, #ff6b35 0%, #e55100 100%);
+            box-shadow: 0 20px 40px rgba(255, 140, 0, 0.4), 0 8px 16px rgba(255, 140, 0, 0.2);
         }
 
-            .seat.blocked.editable:hover {
-                background: linear-gradient(135deg, #d97706, #b45309);
-                box-shadow: 0 12px 32px rgba(245, 158, 11, 0.5);
-            }
-
     .seat.blocked-admin {
-        background: linear-gradient(135deg, #f97316, #ea580c);
+        background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%);
         color: white;
-        border-color: #c2410c;
-        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
-        animation: adminGlow 3s ease-in-out infinite alternate;
+        border-color: #e55100;
+        box-shadow: 0 8px 20px rgba(255, 140, 0, 0.4), 0 4px 8px rgba(255, 140, 0, 0.2);
+        animation: adminGlow 4s ease-in-out infinite alternate;
     }
 
         .seat.blocked-admin:hover {
-            background: linear-gradient(135deg, #ea580c, #c2410c);
-            box-shadow: 0 12px 32px rgba(249, 115, 22, 0.6);
-            transform: scale(1.2) translateY(-6px);
-        }
-
-    .seat.blocked-admin-view {
-        background: linear-gradient(135deg, #f97316, #ea580c);
-        color: white;
-        border-color: #c2410c;
-        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
-        cursor: default;
-    }
-
-        .seat.blocked-admin-view:hover {
-            background: linear-gradient(135deg, #ea580c, #c2410c);
-            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.5);
+            background: linear-gradient(135deg, #ff6b35 0%, #e55100 100%);
+            box-shadow: 0 20px 40px rgba(255, 140, 0, 0.5), 0 8px 16px rgba(255, 140, 0, 0.3);
         }
 
     .seat.selected {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
         color: white;
-        border-color: #1d4ed8;
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
-        animation: pulse 2s infinite;
+        border-color: #064e3b;
+        box-shadow: 0 12px 28px rgba(5, 150, 105, 0.5), 0 4px 8px rgba(5, 150, 105, 0.3);
+        animation: selectedPulse 3s ease-in-out infinite;
     }
 
         .seat.selected:hover {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            background: linear-gradient(135deg, #047857 0%, #065f46 50%, #064e3b 100%);
         }
-
-    .seat.blocked-hidden {
-        background: transparent;
-        border: 3px dashed #d1d5db;
-        cursor: not-allowed;
-        color: transparent;
-        box-shadow: none;
-    }
-
-    /* Asientos bloqueados invisibles mantienen espacio pero son completamente invisibles */
-    .seat.blocked-invisible {
-        visibility: hidden;
-        pointer-events: none;
-    }
 
     .seat:disabled {
         cursor: not-allowed;
         opacity: 0.7;
     }
 
-@keyframes adminGlow {
-    0% {
-        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
-    }
-
-    100% {
-        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.8);
-    }
+.row-label {
+    width: 48px !important;
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #4b5563 0%, #374151 50%, #1f2937 100%) !important;
+    color: #f9fafb !important;
+    border-radius: 14px !important;
+    font-weight: 900 !important;
+    font-size: 17px !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 6px 16px rgba(31, 41, 55, 0.25), 0 3px 6px rgba(31, 41, 55, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.15) !important;
+    border: 3px solid rgba(249, 250, 251, 0.15) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+    min-width: 48px !important;
+    min-height: 38px !important;
+    position: relative;
+    margin: 0 !important;
+    z-index: 40 !important;
+    transition: all 0.3s ease !important;
 }
 
-@keyframes pulse {
-    0%, 100% {
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+    .row-label:hover {
+        transform: translateX(-3px) scale(1.05) !important;
+        box-shadow: 0 8px 20px rgba(31, 41, 55, 0.35), 0 4px 8px rgba(31, 41, 55, 0.2), inset 0 3px 6px rgba(255, 255, 255, 0.2) !important;
     }
 
-    50% {
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.8);
+/* Column indicators with Costa Rican theme */
+.column-indicators {
+    display: flex !important;
+    gap: 8px !important;
+    justify-content: center !important;
+    overflow: visible !important;
+    min-width: fit-content !important;
+    position: relative !important;
+    z-index: 15 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+}
+
+    .column-indicators.bottom {
+        margin-top: 20px !important;
+        padding-left: 62px !important;
+        width: auto !important;
+        min-width: fit-content !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        overflow: visible !important;
+        position: relative !important;
+        z-index: 15 !important;
+        gap: 10px !important;
     }
+
+.column-label {
+    width: 42px !important;
+    height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #4b5563 0%, #374151 50%, #1f2937 100%) !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    font-weight: 900 !important;
+    font-size: 14px !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3), 0 2px 4px rgba(31, 41, 55, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.2) !important;
+    border: 3px solid rgba(255, 255, 255, 0.25) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+    min-width: 42px !important;
+    min-height: 34px !important;
+    position: relative;
+    margin: 0 !important;
+    z-index: 20 !important;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
 /* Footer */
@@ -463,10 +594,11 @@
     align-items: center;
     gap: 16px;
     padding: 20px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     border-radius: 12px;
     font-size: 14px;
     color: #6b7280;
+    border: 1px solid rgba(21, 128, 61, 0.1);
 }
 
 .user-info,
@@ -477,7 +609,7 @@
     font-weight: 500;
 }
 
-/* Loading y Error States */
+/* Loading and Error States */
 .seat-matrix-loading,
 .seat-matrix-error {
     display: flex;
@@ -490,14 +622,14 @@
 
 .loading-icon,
 .error-icon {
-    color: #3b82f6;
+    color: #15803d;
     margin-bottom: 24px;
 }
 
 .seat-matrix-loading h3,
 .seat-matrix-error h3 {
     margin: 0 0 12px 0;
-    color: #111827;
+    color: #374151;
     font-size: 24px;
     font-weight: 700;
 }
@@ -528,13 +660,13 @@
     }
 
     .alert.alert-info {
-        background: #eff6ff;
-        color: #1d4ed8;
-        border: 2px solid #bfdbfe;
+        background: #f0fdf4;
+        color: #15803d;
+        border: 2px solid #bbf7d0;
     }
 
         .alert.alert-info svg {
-            color: #3b82f6;
+            color: #15803d;
         }
 
 .close-btn {
@@ -553,137 +685,56 @@
         background: rgba(0, 0, 0, 0.1);
     }
 
-/* Indicadores de columna */
-.column-indicators {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
-    .column-indicators.bottom {
-        margin-top: 16px;
-        padding-left: 60px; /* Alineación con los asientos considerando el espacio del indicador de fila */
-    }
-
-.column-label {
-    width: 44px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #6b7280, #4b5563);
-    color: white;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 14px;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Responsive */
+/* Responsive Design */
 @media (max-width: 768px) {
     .seat-matrix-container {
-        padding: 20px;
-    }
-
-    .seat-matrix-header {
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .matrix-controls {
-        align-self: stretch;
-    }
-
-    .toggle-btn,
-    .refresh-btn {
-        flex: 1;
-        justify-content: center;
-    }
-
-    .seat-statistics,
-    .seat-legend {
-        gap: 16px;
+        padding: 20px !important;
+        margin: 16px auto !important;
+        overflow-x: visible !important;
+        max-width: calc(100% - 32px) !important;
     }
 
     .seat-grid {
-        padding: 16px;
+        padding: 20px !important;
+        max-width: 100% !important;
+        overflow: visible !important;
     }
 
-    .seat,
-    .row-label {
-        width: 36px;
-        height: 36px;
-        font-size: 11px;
-    }
-
-    /* Ajuste responsive para alineación de indicadores de columna */
     .column-indicators.bottom {
-        padding-left: 52px;
-    }
-
-    /* Estilos responsive para indicadores de columna */
-    .column-label {
-        width: 36px;
-        height: 28px;
-        font-size: 12px;
-    }
-
-    .seats-container {
-        gap: 6px;
-    }
-
-    .stage-content {
-        padding: 16px 48px;
-        font-size: 16px;
-    }
-
-    .admin-badge {
-        font-size: 10px;
-        padding: 2px 8px;
+        padding-left: 62px !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
     }
 }
 
 @media (max-width: 480px) {
-    .seat-statistics,
-    .seat-legend {
-        justify-content: flex-start;
+    .seat-matrix-container {
+        padding: 16px !important;
+        margin: 12px auto !important;
+        max-width: calc(100% - 24px) !important;
     }
 
-    .stat-item,
-    .legend-item {
-        font-size: 14px;
+    .seat-grid {
+        padding: 16px !important;
+        max-width: 100% !important;
     }
 
-    .seat,
-    .row-label {
-        width: 32px;
-        height: 32px;
-        font-size: 10px;
-    }
-
-    /* Ajuste responsive para pantallas pequeñas */
     .column-indicators.bottom {
-        padding-left: 48px;
+        padding-left: 56px !important;
+        justify-content: flex-start !important;
+        gap: 9px !important;
     }
 
-    /* Estilos responsive para pantallas pequeñas */
     .column-label {
-        width: 32px;
-        height: 24px;
-        font-size: 10px;
-    }
-
-    .seat-sample {
-        width: 28px;
-        height: 28px;
-        font-size: 10px;
+        width: 38px !important;
+        height: 28px !important;
+        font-size: 12px !important;
+        min-width: 38px !important;
+        margin: 0 !important;
     }
 }
 
-/* Animaciones */
+/* Animations */
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -697,3 +748,53 @@
 .animate-spin {
     animation: spin 1s linear infinite;
 }
+
+@keyframes adminGlow {
+    0% {
+        box-shadow: 0 8px 20px rgba(255, 140, 0, 0.4), 0 4px 8px rgba(255, 140, 0, 0.2);
+    }
+
+    100% {
+        box-shadow: 0 12px 28px rgba(255, 140, 0, 0.6), 0 6px 12px rgba(255, 140, 0, 0.3);
+    }
+}
+
+@keyframes selectedPulse {
+    0%, 100% {
+        box-shadow: 0 12px 28px rgba(5, 150, 105, 0.5), 0 4px 8px rgba(5, 150, 105, 0.3);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 16px 36px rgba(5, 150, 105, 0.7), 0 6px 12px rgba(5, 150, 105, 0.4);
+        transform: scale(1.02);
+    }
+}
+
+/* Fixing blocked seat visibility logic for admin vs user view */
+/* Making blocked seats invisible for regular users */
+.seat.blocked-invisible,
+.seat.blocked-hidden {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    display: none !important;
+    pointer-events: none !important;
+}
+
+/* Making blocked seats visible with orange background for admin view */
+.seat.blocked-admin-view {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%) !important;
+    color: white !important;
+    border: 3px solid #e55100 !important;
+    cursor: not-allowed;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+    box-shadow: 0 8px 20px rgba(255, 140, 0, 0.4), 0 4px 8px rgba(255, 140, 0, 0.2);
+    animation: adminGlow 4s ease-in-out infinite alternate;
+}
+
+    .seat.blocked-admin-view:hover {
+        background: linear-gradient(135deg, #ff6b35 0%, #e55100 100%) !important;
+        box-shadow: 0 20px 40px rgba(255, 140, 0, 0.5), 0 8px 16px rgba(255, 140, 0, 0.3);
+    }

@@ -79,6 +79,30 @@ const SeatMatrix = ({ eventoId, onSeatSelect, selectedSeats = [], isAdminMode = 
         }
     }, [eventoId])
 
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden && eventoId) {
+                console.log("Página visible nuevamente, recargando asientos...")
+                loadSeatGrid()
+            }
+        }
+
+        const handleFocus = () => {
+            if (eventoId) {
+                console.log("Ventana enfocada, recargando asientos...")
+                loadSeatGrid()
+            }
+        }
+
+        document.addEventListener("visibilitychange", handleVisibilityChange)
+        window.addEventListener("focus", handleFocus)
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange)
+            window.removeEventListener("focus", handleFocus)
+        }
+    }, [eventoId, loadSeatGrid])
+
     const processSeatGridFromAPI = (apiResponse) => {
         const grid = []
 
@@ -235,7 +259,11 @@ const SeatMatrix = ({ eventoId, onSeatSelect, selectedSeats = [], isAdminMode = 
     }
 
     const getSeatNumber = (seat) => {
-        const seatNumber = seat.row * statistics.actualColumns + seat.column + 1
+        const totalColumns = seatGrid.length > 0 ? Math.max(...seatGrid.map((row) => row.length)) : 0
+        const totalRows = seatGrid.length
+        // Calculate from bottom-left: (totalRows - currentRow - 1) * totalColumns + column + 1
+        const rowFromBottom = totalRows - seat.row - 1
+        const seatNumber = rowFromBottom * totalColumns + seat.column + 1
         return seatNumber.toString()
     }
 
@@ -347,18 +375,8 @@ const SeatMatrix = ({ eventoId, onSeatSelect, selectedSeats = [], isAdminMode = 
                     <h3 className="matrix-title">
                         <MapPin size={20} />
                         {isEditing ? "Gestión de Asientos" : "Selección de Asientos"}
-                        <span className="matrix-dimensions">
-                            (Matriz: {statistics.actualRows} × {statistics.actualColumns})
-                        </span>
-                        {hasRole("ADMIN") && <span className="admin-badge">Vista Admin</span>}
                     </h3>
-                    <p className="matrix-subtitle">
-                        {isEditing
-                            ? "Haz clic en los asientos para bloquear/desbloquear. Numeración: (fila+1)×(columna+1)"
-                            : hasRole("ADMIN")
-                                ? "Vista de administrador: Los asientos bloqueados se muestran en naranja con numeración visible."
-                                : "Selecciona tus asientos preferidos. Los asientos no disponibles aparecen en blanco."}
-                    </p>
+                    
                 </div>
 
                 <div className="matrix-controls">
@@ -436,10 +454,10 @@ const SeatMatrix = ({ eventoId, onSeatSelect, selectedSeats = [], isAdminMode = 
             </div>
 
             <div className="seat-grid">
-                {[...seatGrid].reverse().map((row, rowIndex) => {
+                {seatGrid.map((row, rowIndex) => {
                     if (!row || row.length === 0) return null
 
-                    const rowNumber = row[0]?.row ?? seatGrid.length - 1 - rowIndex
+                    const rowNumber = row[0]?.row ?? rowIndex
 
                     return (
                         <div key={rowIndex} className="seat-row">
@@ -476,29 +494,6 @@ const SeatMatrix = ({ eventoId, onSeatSelect, selectedSeats = [], isAdminMode = 
                 </div>
             </div>
 
-            <div className="matrix-footer">
-                {!isEditing && (
-                    <div className="user-info">
-                        <Info size={16} />
-                        <span>
-                            {hasRole("ADMIN")
-                                ? "Vista de administrador: Los asientos bloqueados se muestran en naranja con numeración visible."
-                                : "Vista de usuario: Los asientos bloqueados son completamente invisibles."}
-                        </span>
-                    </div>
-                )}
-
-                {isEditing && (
-                    <div className="editing-info">
-                        <Settings size={16} />
-                        <span>
-                            Modo edición: Haz clic en los asientos para bloquear/desbloquear. Los asientos ocupados no se pueden
-                            modificar. Numeración: (fila+1)×(columna+1). Matriz de abajo hacia arriba. Total bloqueados:{" "}
-                            {statistics.blocked}
-                        </span>
-                    </div>
-                )}
-            </div>
         </div>
     )
 }

@@ -65,7 +65,6 @@ const ROLE_PERMISSIONS = {
 const normalizeRoles = (user) => {
     if (!user) return []
 
-    console.log("[v0] useRoles - Raw user data:", user)
 
     // Verificar diferentes formatos de roles que puede devolver el backend
     let roles = []
@@ -91,12 +90,10 @@ const normalizeRoles = (user) => {
         roles = Array.isArray(user.userRoles) ? user.userRoles : [user.userRoles]
     }
 
-    console.log("[v0] useRoles - Normalized roles:", roles)
 
     // Si no hay roles, asignar USER por defecto
     if (roles.length === 0) {
         roles = [ROLES.USER]
-        console.log("[v0] useRoles - No roles found, defaulting to USER")
     }
 
     return roles
@@ -107,7 +104,6 @@ export const useRoles = () => {
 
     const userRoles = useMemo(() => {
         if (!isAuthenticated || !user) {
-            console.log("[v0] useRoles - Not authenticated or no user")
             return []
         }
 
@@ -124,19 +120,16 @@ export const useRoles = () => {
             rolePermissions.forEach((permission) => permissions.add(permission))
         })
 
-        console.log("[v0] useRoles - User permissions:", Array.from(permissions))
         return Array.from(permissions)
     }, [userRoles, isAuthenticated])
 
     const hasRole = (role) => {
         const result = userRoles.includes(role)
-        console.log(`[v0] useRoles - hasRole(${role}):`, result)
         return result
     }
 
     const hasPermission = (permission) => {
         const result = userPermissions.includes(permission)
-        console.log(`[v0] useRoles - hasPermission(${permission}):`, result)
         return result
     }
 
@@ -150,7 +143,6 @@ export const useRoles = () => {
 
     const isAdmin = () => {
         const result = hasRole(ROLES.ADMIN)
-        console.log("[v0] useRoles - isAdmin():", result)
         return result
     }
 

@@ -14,6 +14,8 @@ const SeatSelector = ({ evento, onSeatSelect }) => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
     const [showUsers, setShowUsers] = useState(false) // Toggle para mostrar usuarios
+    const [purchasing, setPurchasing] = useState(false)
+    const [purchaseError, setPurchaseError] = useState("")
 
     useEffect(() => {
         if (evento?.id) {
@@ -150,6 +152,51 @@ const SeatSelector = ({ evento, onSeatSelect }) => {
         }
     }
 
+    const handlePurchaseSeats = async () => {
+        if (selectedSeats.length === 0) {
+            alert("Por favor selecciona al menos un asiento")
+            return
+        }
+
+        setPurchasing(true)
+        setPurchaseError("")
+
+        try {
+            console.log("[v0] Iniciando compra de asientos:", selectedSeats)
+
+            // Comprar cada asiento seleccionado
+            const purchasePromises = selectedSeats.map(async (seatId) => {
+                const [row, column] = seatId.split("-").map(Number)
+
+                console.log("[v0] Comprando asiento:", { eventoId: evento.id, seatRow: row, seatColumn: column })
+
+                return await ticketService.create({
+                    eventoId: evento.id,
+                    seatRow: row,
+                    seatColumn: column,
+                })
+            })
+
+            const purchaseResults = await Promise.all(purchasePromises)
+            console.log("[v0] Compras completadas:", purchaseResults)
+
+            // Limpiar asientos seleccionados
+            setSelectedSeats([])
+
+            // Recargar datos para actualizar el estado
+            await loadSeatData()
+
+            alert(`¡Compra exitosa! Se compraron ${purchaseResults.length} asiento(s)`)
+        } catch (error) {
+            console.error("[v0] Error en compra:", error)
+            const errorMessage = getErrorMessage(error)
+            setPurchaseError(errorMessage)
+            alert(`Error en la compra: ${errorMessage}`)
+        } finally {
+            setPurchasing(false)
+        }
+    }
+
     const getSeatClass = (row, column) => {
         if (isSeatSelected(row, column)) {
             return "seat selected"
@@ -166,7 +213,8 @@ const SeatSelector = ({ evento, onSeatSelect }) => {
     const getSeatTitle = (row, column) => {
         const displayRow = row + 1
         const displayColumn = column + 1
-        const seatNumber = displayRow * displayColumn
+        // Número único basado en posición secuencial
+        const seatNumber = row * evento.seatsPerRow + column + 1
         const baseTitle = `Fila ${displayRow}, Asiento ${displayColumn} (Nº ${seatNumber})`
 
         if (isSeatPurchased(row, column)) {
@@ -196,6 +244,7 @@ const SeatSelector = ({ evento, onSeatSelect }) => {
 
             for (let column = 0; column < evento.seatsPerRow; column++) {
                 const owner = getSeatOwner(row, column)
+                const seatNumber = row * evento.seatsPerRow + column + 1
 
                 if (isSeatBlocked(row, column)) {
                     seats.push(
@@ -215,7 +264,7 @@ const SeatSelector = ({ evento, onSeatSelect }) => {
                             {showUsers && owner ? (
                                 <span className="seat-user-initial">{owner.userName.charAt(0).toUpperCase()}</span>
                             ) : (
-                                (row + 1) * (column + 1)
+                                seatNumber
                             )}
                         </button>,
                     )
@@ -320,13 +369,35 @@ const SeatSelector = ({ evento, onSeatSelect }) => {
                     <div className="selected-seats-list">
                         {selectedSeats.map((seatId) => {
                             const [row, column] = seatId.split("-").map(Number)
-                            const seatNumber = (row + 1) * (column + 1)
+                            const seatNumber = row * evento.seatsPerRow + column + 1
                             return (
                                 <span key={seatId} className="selected-seat-tag">
                                     Fila {row + 1}, Asiento {column + 1} (Nº {seatNumber})
                                 </span>
                             )
                         })}
+                    </div>
+
+                    <div className="purchase-section">
+                        {purchaseError && (
+                            <div className="purchase-error">
+                                <p>{purchaseError}</p>
+                            </div>
+                        )}
+                        <button
+                            onClick={handlePurchaseSeats}
+                            disabled={purchasing || selectedSeats.length === 0}
+                            className={`purchase-button ${purchasing ? "purchasing" : ""}`}
+                        >
+                            {purchasing ? (
+                                <>
+                                    <div className="purchase-spinner"></div>
+                                    Comprando...
+                                </>
+                            ) : (
+                                `Comprar ${selectedSeats.length} Asiento${selectedSeats.length > 1 ? "s" : ""}`
+                            )}
+                        </button>
                     </div>
                 </div>
             )}
@@ -337,7 +408,7 @@ const SeatSelector = ({ evento, onSeatSelect }) => {
                     <div className="users-grid">
                         {Object.entries(seatOwners).map(([seatKey, owner]) => {
                             const [row, column] = seatKey.split("-").map(Number)
-                            const seatNumber = (row + 1) * (column + 1)
+                            const seatNumber = row * evento.seatsPerRow + column + 1
                             return (
                                 <div key={seatKey} className="user-item">
                                     <div className="user-avatar">{owner.userName.charAt(0).toUpperCase()}</div>

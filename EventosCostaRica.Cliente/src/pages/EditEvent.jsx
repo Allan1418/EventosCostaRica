@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
-import { useError } from "../context/ErrorContext"
+import { useError } from "../components/ErrorHandler"
 import { eventService, seatService, getErrorMessage } from "../services/api"
 import SeatMatrix from "../components/Events/SeatMatrix"
 import {

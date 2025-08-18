@@ -17,8 +17,11 @@ import EditEvent from "./pages/EditEvent"
 import EventDetail from "./pages/EventDetail"
 import PurchaseTicket from "./pages/PurchaseTicket"
 import UserList from "./pages/UserList"
+import EditUser from "./pages/EditUser"
 import Profile from "./pages/Profile"
 import MyTickets from "./pages/MyTickets"
+import TicketInfo from "./pages/TicketInfo"
+import TestBoleto from "./test-boleto/TestBoleto"
 import "./App.css"
 
 function AppContent() {
@@ -63,7 +66,14 @@ function AppContent() {
                                 </ProtectedRoute>
                             }
                         />
-
+                        <Route
+                            path="/editar-usuario/:id"
+                            element={
+                                <ProtectedRoute adminOnly={true}>
+                                    <EditUser />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route
                             path="/perfil"
                             element={
@@ -85,6 +95,22 @@ function AppContent() {
                             element={
                                 <ProtectedRoute>
                                     <MyTickets />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/boleto/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <TicketInfo />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/test-boleto"
+                            element={
+                                <ProtectedRoute adminOnly={true}>
+                                    <TestBoleto />
                                 </ProtectedRoute>
                             }
                         />

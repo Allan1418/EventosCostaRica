@@ -207,6 +207,121 @@ export const authService = {
             throw error
         }
     },
+
+    async editUser(id, userData) {
+        try {
+            console.log("[v0] === INICIANDO EDICIÓN DE USUARIO ===")
+            console.log("[v0] ID del usuario:", id)
+            console.log("[v0] Datos recibidos:", userData)
+
+            if (!id) {
+                throw new Error("ID del usuario es requerido")
+            }
+
+            if (!userData.userName || !userData.userName.trim()) {
+                throw new Error("Nombre de usuario es requerido")
+            }
+
+            if (!userData.email || !userData.email.trim()) {
+                throw new Error("Email es requerido")
+            }
+
+            if (!userData.roles || !Array.isArray(userData.roles) || userData.roles.length === 0) {
+                throw new Error("El usuario debe tener al menos un rol")
+            }
+
+            const requestData = {
+                Id: id, // Backend espera 'Id' con mayúscula
+                Email: userData.email.trim(), // Campo directo en nivel raíz
+                UserName: userData.userName.trim(), // Campo directo en nivel raíz
+                Roles: userData.roles, // Campo directo en nivel raíz
+            }
+
+            console.log("[v0] Datos procesados para envío (estructura plana):", requestData)
+            console.log("[v0] Cuerpo JSON que se enviará:", JSON.stringify(requestData, null, 2))
+            console.log("[v0] Verificación de campos:")
+            console.log("[v0] - Id:", requestData.Id, "tipo:", typeof requestData.Id)
+            console.log("[v0] - Email:", requestData.Email, "tipo:", typeof requestData.Email)
+            console.log("[v0] - UserName:", requestData.UserName, "tipo:", typeof requestData.UserName)
+            console.log(
+                "[v0] - Roles:",
+                requestData.Roles,
+                "tipo:",
+                typeof requestData.Roles,
+                "es array:",
+                Array.isArray(requestData.Roles),
+            )
+            console.log("[v0] URL completa:", `${API_BASE_URL}/api/User/edit/${id}`)
+
+            const token = localStorage.getItem("authToken")
+            console.log("[v0] Token presente:", token ? "Sí" : "No")
+
+            console.log("[v0] Enviando petición PUT...")
+            const startTime = Date.now()
+
+            const response = await api.put(`/api/User/edit/${id}`, requestData)
+
+            const endTime = Date.now()
+            console.log(`[v0] Petición completada en ${endTime - startTime}ms`)
+            console.log("[v0] === RESPUESTA EXITOSA ===")
+            console.log("[v0] Status:", response.status)
+            console.log("[v0] Headers:", response.headers)
+            console.log("[v0] Data:", response.data)
+
+            return response.data
+        } catch (error) {
+            console.error("[v0] === ERROR EN EDICIÓN DE USUARIO ===")
+            console.error("[v0] Mensaje:", error.message)
+            console.error("[v0] Response status:", error.response?.status)
+            console.error("[v0] Response headers:", error.response?.headers)
+            console.error("[v0] Response data:", error.response?.data)
+            if (error.response?.data?.errors) {
+                console.error("[v0] Errores de validación específicos:")
+                Object.keys(error.response.data.errors).forEach((field) => {
+                    console.error(`[v0] - Campo '${field}':`, error.response.data.errors[field])
+                })
+            }
+            console.error("[v0] Request config:", error.config)
+            console.error("[v0] Stack trace:", error.stack)
+
+            if (error.response?.status === 400) {
+                const errorData = error.response.data
+                if (typeof errorData === "string") {
+                    throw new Error(`Error de validación: ${errorData}`)
+                } else if (errorData?.errors) {
+                    const errorMessages = []
+                    for (const field in errorData.errors) {
+                        if (Array.isArray(errorData.errors[field])) {
+                            errorMessages.push(...errorData.errors[field])
+                        } else {
+                            errorMessages.push(errorData.errors[field])
+                        }
+                    }
+                    throw new Error(`Errores de validación: ${errorMessages.join(", ")}`)
+                }
+            }
+
+            if (error.response?.status === 404) {
+                throw new Error("Usuario no encontrado")
+            }
+
+            if (error.response?.status === 403) {
+                throw new Error("No tienes permisos para editar este usuario")
+            }
+
+            throw error
+        }
+    },
+
+    async deleteUser(id) {
+        try {
+            const response = await api.delete(`/api/User/${id}`)
+            return response.data
+        } catch (error) {
+            console.error("Delete user API error:", error)
+            throw error
+        }
+    },
 }
 
 // Servicios de eventos
@@ -247,11 +362,32 @@ export const eventService = {
             }
 
             console.log("Creating event with data:", requestData)
+            console.log("URL completa:", `${API_BASE_URL}/api/Evento`)
+
+            const token = localStorage.getItem("authToken")
+            console.log("Token presente:", token ? "Sí" : "No")
+
+            console.log("Enviando petición POST...")
+            const startTime = Date.now()
+
             const response = await api.post("/api/Evento", requestData)
-            console.log("Event created successfully:", response.data)
+
+            const endTime = Date.now()
+            console.log(`Petición completada en ${endTime - startTime}ms`)
+            console.log("=== RESPUESTA EXITOSA ===")
+            console.log("Status:", response.status)
+            console.log("Headers:", response.headers)
+            console.log("Data:", response.data)
+
             return response.data
         } catch (error) {
-            console.error("Create event API error:", error)
+            console.error("=== ERROR EN CREACIÓN DE EVENTO ===")
+            console.error("Mensaje:", error.message)
+            console.error("Response status:", error.response?.status)
+            console.error("Response headers:", error.response?.headers)
+            console.error("Response data:", error.response?.data)
+            console.error("Request data:", eventData)
+
             throw error
         }
     },
@@ -269,18 +405,41 @@ export const eventService = {
             }
 
             console.log("Updating event with data:", requestData)
+            console.log("URL completa:", `${API_BASE_URL}/api/Evento/${id}`)
+
+            const token = localStorage.getItem("authToken")
+            console.log("Token presente:", token ? "Sí" : "No")
+
+            console.log("Enviando petición PUT...")
+            const startTime = Date.now()
+
             const response = await api.put(`/api/Evento/${id}`, requestData)
-            console.log("Event updated successfully:", response.data)
+
+            const endTime = Date.now()
+            console.log(`Petición completada en ${endTime - startTime}ms`)
+            console.log("=== RESPUESTA EXITOSA ===")
+            console.log("Status:", response.status)
+            console.log("Headers:", response.headers)
+            console.log("Data:", response.data)
+
             return response.data
         } catch (error) {
-            console.error("Update event API error:", error)
+            console.error("=== ERROR EN ACTUALIZACIÓN DE EVENTO ===")
+            console.error("Mensaje:", error.message)
+            console.error("Response status:", error.response?.status)
+            console.error("Response headers:", error.response?.headers)
+            console.error("Response data:", error.response?.data)
+            console.error("Request config:", error.config)
+            console.error("Stack trace:", error.stack)
+
             throw error
         }
     },
 
     async delete(id) {
         try {
-            // Nota: No hay endpoint DELETE en la API, pero mantenemos por compatibilidad
+            // Nota: No hay endpoint DELETE en la API proporcionada
+            // Mantenemos el método por compatibilidad pero podría no funcionar
             const response = await api.delete(`/api/Evento/${id}`)
             return response.data
         } catch (error) {
@@ -361,8 +520,23 @@ export const seatService = {
             }
 
             console.log("Blocking seat with validated data (0,0 explicitly allowed):", requestData)
+            console.log("URL completa:", `${API_BASE_URL}/api/BlockedSeat`)
+
+            const token = localStorage.getItem("authToken")
+            console.log("Token presente:", token ? "Sí" : "No")
+
+            console.log("Enviando petición POST...")
+            const startTime = Date.now()
+
             const response = await api.post("/api/BlockedSeat", requestData)
-            console.log("Seat blocked successfully:", response.data)
+
+            const endTime = Date.now()
+            console.log(`Petición completada en ${endTime - startTime}ms`)
+            console.log("=== RESPUESTA EXITOSA ===")
+            console.log("Status:", response.status)
+            console.log("Headers:", response.headers)
+            console.log("Data:", response.data)
+
             return response.data
         } catch (error) {
             console.error("Block seat API error:", error)
@@ -428,8 +602,23 @@ export const seatService = {
             }
 
             console.log("Unblocking seat with validated data (0,0 explicitly allowed):", requestData)
+            console.log("URL completa:", `${API_BASE_URL}/api/BlockedSeat`)
+
+            const token = localStorage.getItem("authToken")
+            console.log("Token presente:", token ? "Sí" : "No")
+
+            console.log("Enviando petición DELETE...")
+            const startTime = Date.now()
+
             const response = await api.delete("/api/BlockedSeat", { data: requestData })
-            console.log("Seat unblocked successfully")
+
+            const endTime = Date.now()
+            console.log(`Petición completada en ${endTime - startTime}ms`)
+            console.log("=== RESPUESTA EXITOSA ===")
+            console.log("Status:", response.status)
+            console.log("Headers:", response.headers)
+            console.log("Data:", response.data)
+
             return response.data
         } catch (error) {
             console.error("Unblock seat API error:", error)
@@ -473,7 +662,6 @@ export const ticketService = {
             console.log("Datos recibidos:", ticketData)
             console.log("API Base URL:", API_BASE_URL)
 
-            // Validación exhaustiva de datos
             if (!ticketData.eventoId) {
                 throw new Error("ID del evento es requerido")
             }
@@ -487,6 +675,11 @@ export const ticketService = {
             const eventoId = Number.parseInt(ticketData.eventoId, 10)
             const seatRow = Number.parseInt(ticketData.seatRow, 10)
             const seatColumn = Number.parseInt(ticketData.seatColumn, 10)
+
+            console.log("[v0] Validación de datos:")
+            console.log("[v0] - eventoId original:", ticketData.eventoId, "-> parseado:", eventoId)
+            console.log("[v0] - seatRow original:", ticketData.seatRow, "-> parseado:", seatRow)
+            console.log("[v0] - seatColumn original:", ticketData.seatColumn, "-> parseado:", seatColumn)
 
             if (isNaN(eventoId) || eventoId <= 0) {
                 throw new Error("ID del evento debe ser un número válido")
@@ -504,32 +697,73 @@ export const ticketService = {
                 seatColumn: seatColumn,
             }
 
-            console.log("Datos procesados para enviar:", requestData)
-            console.log("URL completa:", `${API_BASE_URL}/api/Boleto`)
+            console.log("[v0] Datos procesados para enviar:", requestData)
+            console.log("[v0] JSON que se enviará:", JSON.stringify(requestData, null, 2))
+            console.log("[v0] URL completa:", `${API_BASE_URL}/api/Boleto`)
 
             const token = localStorage.getItem("authToken")
             if (!token) {
                 throw new Error("No hay token de autenticación. Por favor, inicia sesión nuevamente.")
             }
-            console.log("Token presente:", token ? "Sí" : "No")
+            console.log("[v0] Token presente:", token ? "Sí" : "No")
+            console.log("[v0] Primeros 20 caracteres del token:", token ? token.substring(0, 20) + "..." : "N/A")
 
-            console.log("Enviando petición HTTP...")
+            console.log("[v0] Verificando conectividad con el servidor...")
+            try {
+                const healthCheck = await fetch(`${API_BASE_URL}/api/Evento`, {
+                    method: "HEAD",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                })
+                console.log("[v0] Health check status:", healthCheck.status)
+                if (healthCheck.status === 401) {
+                    throw new Error("Token de autenticación inválido o expirado")
+                }
+            } catch (healthError) {
+                console.error("[v0] Error de conectividad:", healthError)
+                if (healthError.message.includes("Token de autenticación")) {
+                    throw healthError
+                }
+                throw new Error(
+                    "No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:5264",
+                )
+            }
+
+            console.log("[v0] Enviando petición HTTP POST...")
             const startTime = Date.now()
 
             const response = await Promise.race([
-                api.post("/api/Boleto", requestData),
+                api.post("/api/Boleto", requestData, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    timeout: 25000,
+                }),
                 new Promise((_, reject) =>
                     setTimeout(() => reject(new Error("Timeout: La petición tardó más de 25 segundos")), 25000),
                 ),
             ])
 
             const endTime = Date.now()
-            console.log(`Petición completada en ${endTime - startTime}ms`)
+            console.log(`[v0] Petición completada en ${endTime - startTime}ms`)
 
-            console.log("=== RESPUESTA EXITOSA ===")
-            console.log("Status:", response.status)
-            console.log("Data:", response.data)
-            console.log("Headers:", response.headers)
+            console.log("[v0] === RESPUESTA EXITOSA ===")
+            console.log("[v0] Status:", response.status)
+            console.log("[v0] Headers de respuesta:", response.headers)
+            console.log("[v0] Data:", response.data)
+
+            if (!response.data) {
+                console.warn("[v0] Advertencia: La respuesta no contiene datos")
+                throw new Error("La respuesta del servidor está vacía")
+            }
+
+            if (!response.data.id) {
+                console.warn("[v0] Advertencia: La respuesta no contiene ID del boleto")
+            }
+
+            console.log("[v0] Boleto creado con ID:", response.data.id || "ID no disponible")
 
             if (errorContext) {
                 errorContext.showSuccess("¡Boleto comprado exitosamente!")
@@ -537,12 +771,14 @@ export const ticketService = {
 
             return response.data
         } catch (error) {
-            console.error("=== ERROR EN COMPRA DE BOLETO ===")
-            console.error("Mensaje:", error.message)
-            console.error("Response status:", error.response?.status)
-            console.error("Response data:", error.response?.data)
-            console.error("Request data:", ticketData)
-            console.error("Error completo:", error)
+            console.error("[v0] === ERROR EN COMPRA DE BOLETO ===")
+            console.error("[v0] Tipo de error:", error.constructor.name)
+            console.error("[v0] Mensaje:", error.message)
+            console.error("[v0] Response status:", error.response?.status)
+            console.error("[v0] Response headers:", error.response?.headers)
+            console.error("[v0] Response data:", error.response?.data)
+            console.error("[v0] Request data enviado:", ticketData)
+            console.error("[v0] Stack trace:", error.stack)
 
             if (error.message.includes("Timeout")) {
                 throw new Error(
@@ -556,12 +792,68 @@ export const ticketService = {
                 )
             }
 
+            if (error.response?.status === 400) {
+                const errorData = error.response.data
+                console.log("[v0] Datos de error 400:", errorData)
+
+                if (typeof errorData === "string" && errorData.trim()) {
+                    throw new Error(errorData)
+                } else if (errorData?.message) {
+                    throw new Error(errorData.message)
+                } else if (errorData?.title) {
+                    throw new Error(errorData.title)
+                } else if (errorData?.detail) {
+                    throw new Error(errorData.detail)
+                } else if (errorData?.errors) {
+                    const errorMessages = []
+                    for (const field in errorData.errors) {
+                        if (Array.isArray(errorData.errors[field])) {
+                            errorMessages.push(...errorData.errors[field])
+                        } else {
+                            errorMessages.push(errorData.errors[field])
+                        }
+                    }
+                    if (errorMessages.length > 0) {
+                        throw new Error(errorMessages.join(", "))
+                    }
+                }
+                throw new Error("Error de validación en los datos del boleto")
+            }
+
+            if (error.response?.status === 409) {
+                throw new Error("El asiento ya está ocupado o no está disponible")
+            }
+
+            if (error.response?.status === 401) {
+                localStorage.removeItem("authToken")
+                localStorage.removeItem("userData")
+                throw new Error("Tu sesión ha expirado. Por favor, inicia sesión nuevamente")
+            }
+
+            if (error.response?.status === 403) {
+                throw new Error("No tienes permisos para comprar boletos")
+            }
+
+            if (error.response?.status === 404) {
+                throw new Error("El evento no existe o no está disponible")
+            }
+
+            if (error.response?.status >= 500) {
+                throw new Error("Error interno del servidor. Intenta nuevamente en unos momentos")
+            }
+
             throw error
         }
     },
 
     async getMyTickets() {
         try {
+            console.log("=== OBTENIENDO MIS BOLETOS ===")
+            const token = localStorage.getItem("authToken")
+            if (!token) {
+                throw new Error("No hay token de autenticación. Por favor, inicia sesión nuevamente.")
+            }
+
             const response = await api.get("/api/Boleto/mis-boletos")
             console.log("My tickets response:", response.data)
             return Array.isArray(response.data) ? response.data : []
@@ -575,33 +867,9 @@ export const ticketService = {
         }
     },
 
-    async getByEvent(eventId) {
-        try {
-            console.log("Getting tickets for event:", eventId)
-            // Nota: Esta API no está en las especificaciones, pero la mantenemos por compatibilidad
-            // Si no funciona, podríamos obtener todos los tickets del usuario y filtrar
-            const response = await api.get(`/api/Boleto/evento/${eventId}`)
-            console.log("Event tickets response:", response.data)
-            return Array.isArray(response.data) ? response.data : []
-        } catch (error) {
-            console.error("Get event tickets API error:", error)
-            if (error.response?.status === 404) {
-                return []
-            }
-            // Si esta API no existe, intentar con mis-boletos y filtrar
-            try {
-                const myTickets = await this.getMyTickets()
-                return myTickets.filter((ticket) => ticket.eventoId === Number(eventId))
-            } catch (fallbackError) {
-                console.error("Fallback method also failed:", fallbackError)
-                return []
-            }
-        }
-    },
-
     async getById(id) {
         try {
-            console.log("Getting ticket by ID:", id)
+            console.log("=== OBTENIENDO BOLETO POR ID ===", id)
             const response = await api.get(`/api/Boleto/${id}`)
             console.log("Ticket by ID response:", response.data)
             return response.data

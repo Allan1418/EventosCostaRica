@@ -21,7 +21,7 @@ import {
     Info,
     Clock,
     X,
-    Trash2,
+    Grid3X3,
 } from "lucide-react"
 import "./CreateEvent.css"
 
@@ -504,187 +504,169 @@ const CreateEvent = () => {
             )}
 
             {currentStep === 2 && (
-                <div className="seat-configuration-step">
+                <div className="step-content">
                     <div className="step-header">
-                        <h2>Configuración de Asientos Bloqueados</h2>
-                        <p>
-                            Selecciona los asientos que estarán bloqueados (no disponibles para compra). Puedes crear el evento sin
-                            bloquear asientos si lo prefieres.
-                        </p>
+                        <h2>
+                            <Grid3X3 size={24} />
+                            Configuración de Asientos
+                        </h2>
+                        <p>Selecciona los asientos que estarán bloqueados y configura la matriz de tu evento</p>
                     </div>
 
-                    <div className="event-summary-card">
-                        <div className="summary-header">
-                            <h3>
-                                <FileText size={20} />
-                                Resumen del Evento
-                            </h3>
+                    <div className="form-sections">
+                        {/* Matrix Configuration */}
+                        <div className="form-section">
+                            <div className="section-header">
+                                <h3>Dimensiones de la Matriz</h3>
+                                <div className="capacity-info">
+                                    <Users size={16} />
+                                    <span>Capacidad Total: {totalCapacity} asientos</span>
+                                </div>
+                            </div>
+
+                            <div className="matrix-config">
+                                <div className="config-controls">
+                                    <div className="form-group">
+                                        <label htmlFor="rows" className="form-label">
+                                            Número de Filas
+                                        </label>
+                                        <input
+                                            type="number"
+                                            id="rows"
+                                            name="rows"
+                                            value={formData.rows}
+                                            onChange={handleInputChange}
+                                            min="1"
+                                            max="100"
+                                            className="form-input"
+                                            disabled={creating}
+                                        />
+                                        <span className="form-help">Filas numeradas del 0 al {formData.rows - 1}</span>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="seatsPerRow" className="form-label">
+                                            Asientos por Fila
+                                        </label>
+                                        <input
+                                            type="number"
+                                            id="seatsPerRow"
+                                            name="seatsPerRow"
+                                            value={formData.seatsPerRow}
+                                            onChange={handleInputChange}
+                                            min="1"
+                                            max="100"
+                                            className="form-input"
+                                            disabled={creating}
+                                        />
+                                        <span className="form-help">Asientos numerados del 0 al {formData.seatsPerRow - 1}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="summary-content">
-                            <div className="summary-grid">
-                                <div className="summary-item">
-                                    <div className="item-icon">
-                                        <FileText size={16} />
+
+                        {/* Seat Matrix */}
+                        <div className="form-section">
+                            <div className="section-header">
+                                <h3>Gestión de Asientos</h3>
+                                <div className="matrix-stats">
+                                    <div className="stat">
+                                        <span className="stat-value">{selectedSeats.length}</span>
+                                        <span className="stat-label">Bloqueados</span>
                                     </div>
-                                    <div className="item-content">
-                                        <span className="item-label">Nombre</span>
-                                        <span className="item-value">{formData.name}</span>
+                                    <div className="stat">
+                                        <span className="stat-value">{totalCapacity - selectedSeats.length}</span>
+                                        <span className="stat-label">Disponibles</span>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="summary-item">
-                                    <div className="item-icon">
-                                        <Calendar size={16} />
+                            <div className="matrix-container">
+                                <div className="matrix-instructions">
+                                    <div className="instruction-item">
+                                        <Info size={16} />
+                                        <span>Haz clic en los asientos para bloquearlos</span>
                                     </div>
-                                    <div className="item-content">
-                                        <span className="item-label">Fecha</span>
-                                        <span className="item-value">{formatDateTime(formData.eventoDate)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="summary-item">
-                                    <div className="item-icon">
-                                        <MapPin size={16} />
-                                    </div>
-                                    <div className="item-content">
-                                        <span className="item-label">Ubicación</span>
-                                        <span className="item-value">{formData.location}</span>
-                                    </div>
-                                </div>
-
-                                <div className="summary-item">
-                                    <div className="item-icon">
+                                    <div className="instruction-item">
                                         <Users size={16} />
+                                        <span>Los asientos bloqueados no estarán disponibles para compra</span>
                                     </div>
-                                    <div className="item-content">
-                                        <span className="item-label">Capacidad</span>
-                                        <span className="item-value">
-                                            {totalCapacity} asientos ({formData.rows} filas × {formData.seatsPerRow} asientos)
-                                        </span>
+                                </div>
+
+                                <div className="seat-matrix-wrapper">
+                                    <div className="matrix-stage">
+                                        <span>ESCENARIO</span>
+                                    </div>
+
+                                    <div className="seats-grid-container">
+                                        <div className="seats-grid">
+                                            {Array.from({ length: formData.rows }, (_, row) => (
+                                                <div key={row} className="seat-row">
+                                                    <div className="row-label left">{row}</div>
+                                                    <div className="row-seats">
+                                                        {Array.from({ length: formData.seatsPerRow }, (_, col) => {
+                                                            const seatKey = `${row}-${col}`
+                                                            const isSelected = selectedSeats.includes(seatKey)
+                                                            const totalColumns = formData.seatsPerRow
+                                                            const totalRows = formData.rows
+                                                            const rowFromBottom = totalRows - row - 1
+                                                            const seatNumber = rowFromBottom * totalColumns + col + 1
+                                                            return (
+                                                                <button
+                                                                    key={col}
+                                                                    className={`seat ${isSelected ? "blocked" : "available"}`}
+                                                                    onClick={() => handleSeatSelection(row, col)}
+                                                                    title={`Asiento ${seatNumber} (Fila ${row}, Columna ${col}) - ${isSelected ? "Bloqueado" : "Disponible"}`}
+                                                                    disabled={creating}
+                                                                >
+                                                                    {seatNumber}
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="column-indicators bottom">
+                                            {Array.from({ length: formData.seatsPerRow }, (_, colIndex) => (
+                                                <div key={colIndex} className="column-label">
+                                                    {colIndex}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="seat-legend">
+                                        <div className="legend-item">
+                                            <div className="seat available">1</div>
+                                            <span>Disponible</span>
+                                        </div>
+                                        <div className="legend-item">
+                                            <div className="seat blocked">2</div>
+                                            <span>Bloqueado</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div className="seat-matrix-section">
-                        <div className="matrix-header">
-                            <h3>
-                                <Users size={20} />
-                                Matriz de Asientos
-                            </h3>
-                            <div className="matrix-controls">
-                                <div className="matrix-info">
-                                    <Info size={16} />
-                                    <span>Haz clic en los asientos para bloquearlos</span>
-                                </div>
-                                {selectedSeats.length > 0 && (
-                                    <button onClick={clearSelectedSeats} className="btn btn-outline btn-sm" disabled={creating}>
-                                        <Trash2 size={14} />
-                                        Limpiar ({selectedSeats.length})
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="seat-matrix-container">
-                            <div className="matrix-stage">
-                                <span>ESCENARIO</span>
-                            </div>
-
-                            <div className="seats-grid">
-                                {Array.from({ length: formData.rows }, (_, row) => (
-                                    <div key={row} className="seat-row">
-                                        <div className="row-label">{row}</div>
-                                        <div className="row-seats">
-                                            {Array.from({ length: formData.seatsPerRow }, (_, col) => {
-                                                const seatKey = `${row}-${col}`
-                                                const isSelected = selectedSeats.includes(seatKey)
-                                                return (
-                                                    <button
-                                                        key={col}
-                                                        className={`seat ${isSelected ? "selected" : "available"}`}
-                                                        onClick={() => handleSeatSelection(row, col)}
-                                                        title={`Fila ${row}, Asiento ${col} - ${isSelected ? "Bloqueado" : "Disponible"}`}
-                                                        disabled={creating}
-                                                    >
-                                                        {col}
-                                                    </button>
-                                                )
-                                            })}
-                                        </div>
-                                        <div className="row-label">{row}</div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="seat-legend">
-                                <div className="legend-item">
-                                    <div className="seat available"></div>
-                                    <span>Disponible</span>
-                                </div>
-                                <div className="legend-item">
-                                    <div className="seat selected"></div>
-                                    <span>Bloqueado</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {selectedSeats.length > 0 && (
-                        <div className="selected-seats-card">
-                            <div className="selected-header">
-                                <h4>
-                                    <Users size={18} />
-                                    Asientos Seleccionados para Bloquear ({selectedSeats.length})
-                                </h4>
-                                <button onClick={clearSelectedSeats} className="btn btn-outline btn-sm" disabled={creating}>
-                                    <Trash2 size={14} />
-                                    Limpiar Todo
-                                </button>
-                            </div>
-                            <div className="selected-grid">
-                                {selectedSeats.map((seatKey, index) => {
-                                    const [row, col] = seatKey.split("-")
-                                    return (
-                                        <div key={index} className="selected-seat-item">
-                                            <div className="seat-info">
-                                                <Users size={14} />
-                                                <span>
-                                                    Fila {row}, Asiento {col}
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={() => removeSeat(seatKey)}
-                                                className="remove-seat-btn"
-                                                disabled={creating}
-                                                title="Remover asiento"
-                                            >
-                                                <X size={12} />
-                                            </button>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
-                    )}
 
                     <div className="step-actions">
                         <button type="button" onClick={handlePreviousStep} className="btn btn-secondary" disabled={creating}>
-                            <ArrowLeft className="button-icon" />
+                            <ArrowLeft size={16} />
                             Anterior
                         </button>
-                        <button type="button" onClick={handleCreateEvent} disabled={creating} className="btn btn-primary btn-lg">
+                        <button type="button" onClick={handleCreateEvent} disabled={creating} className="btn btn-primary btn-save">
                             {creating ? (
                                 <>
-                                    <Loader2 className="button-icon animate-spin" />
-                                    Creando Evento...
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Creando...
                                 </>
                             ) : (
                                 <>
-                                    <Save className="button-icon" />
+                                    <Save size={16} />
                                     Crear Evento
-                                    {selectedSeats.length > 0 && ` (${selectedSeats.length} asientos bloqueados)`}
                                 </>
                             )}
                         </button>

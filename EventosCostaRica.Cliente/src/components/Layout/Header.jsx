@@ -11,9 +11,6 @@ const Header = () => {
     const { user, isAuthenticated, logout } = useAuth()
     const navigate = useNavigate()
 
-    console.log("[v0] Header - User:", user)
-    console.log("[v0] Header - User roles:", user?.roles)
-
     const handleLogout = async () => {
         try {
             await logout()
@@ -31,12 +28,6 @@ const Header = () => {
     const isAdmin = () => {
         const userRoles = user?.roles || []
         const adminCheck = Array.isArray(userRoles) && userRoles.includes("ADMIN")
-        console.log("[v0] Header - Admin check:", {
-            userRoles,
-            isArray: Array.isArray(userRoles),
-            includesAdmin: userRoles.includes("ADMIN"),
-            adminCheck,
-        })
         return adminCheck
     }
 
@@ -62,72 +53,60 @@ const Header = () => {
     return (
         <header className="header">
             <div className="header-container">
-                {/* Logo */}
                 <Link to="/" className="header-logo" onClick={closeMenu}>
                     <div className="logo-icon">
-                        <div className="logo-gradient">
-                            <Sparkles className="sparkle-icon" />
-                        </div>
+                        <Sparkles size={20} />
                     </div>
-                    <div className="logo-text-container">
-                        <span className="logo-text">EventosCR</span>
-                        <span className="logo-subtitle">Gestión de Eventos</span>
-                    </div>
+                    <span className="logo-text">EventosCR</span>
                 </Link>
 
-                {/* Desktop Navigation */}
                 <nav className="desktop-nav">
                     {isAuthenticated ? (
                         <>
-                            <button onClick={() => handleNavigation("/perfil")} className="nav-link">
-                                <User className="nav-icon" />
-                                <span>Mi Perfil</span>
-                            </button>
+                            <div className="nav-links">
+                                <button onClick={() => handleNavigation("/perfil")} className="nav-link">
+                                    <User size={16} />
+                                    <span>Perfil</span>
+                                </button>
 
-                            <button onClick={() => handleNavigation("/mis-boletos")} className="nav-link">
-                                <Ticket className="nav-icon" />
-                                <span>Mis Boletos</span>
-                            </button>
+                                <button onClick={() => handleNavigation("/mis-boletos")} className="nav-link">
+                                    <Ticket size={16} />
+                                    <span>Mis Boletos</span>
+                                </button>
 
-                            {isAdmin() && (
-                                <>
-                                    <button onClick={() => handleNavigation("/crear-evento")} className="nav-link">
-                                        <Calendar className="nav-icon" />
-                                        <span>Crear Evento</span>
-                                    </button>
+                                {isAdmin() && (
+                                    <>
+                                        <button onClick={() => handleNavigation("/crear-evento")} className="nav-link">
+                                            <Calendar size={16} />
+                                            <span>Crear Evento</span>
+                                        </button>
 
-                                    <button onClick={() => handleNavigation("/usuarios")} className="nav-link">
-                                        <Users className="nav-icon" />
-                                        <span>Usuarios</span>
-                                    </button>
-                                </>
-                            )}
+                                        <button onClick={() => handleNavigation("/usuarios")} className="nav-link">
+                                            <Users size={16} />
+                                            <span>Usuarios</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
 
-                            {/* User menu */}
                             <div className="user-menu">
                                 <div className="user-info">
                                     <div className="user-avatar">
-                                        <div className="avatar-gradient">
-                                            <User className="avatar-icon" />
-                                        </div>
-                                        <div className="status-indicator"></div>
+                                        <User size={16} />
                                     </div>
                                     <div className="user-details">
                                         <span className="user-name">{user?.userName || "Usuario"}</span>
                                         <span className={`user-role ${getRoleClass(user?.roles)}`}>{getRoleDisplayName(user?.roles)}</span>
                                     </div>
                                 </div>
-                                <div className="user-actions">
-                                    <button onClick={handleLogout} className="logout-btn">
-                                        <LogOut className="nav-icon" />
-                                        <span>Salir</span>
-                                    </button>
-                                </div>
+                                <button onClick={handleLogout} className="logout-btn">
+                                    <LogOut size={16} />
+                                </button>
                             </div>
                         </>
                     ) : (
                         <div className="auth-buttons">
-                            <Link to="/login" className="btn btn-secondary">
+                            <Link to="/login" className="btn btn-outline">
                                 Iniciar Sesión
                             </Link>
                             <Link to="/register" className="btn btn-primary">
@@ -151,10 +130,7 @@ const Header = () => {
                             <>
                                 <div className="mobile-user-info">
                                     <div className="mobile-user-avatar">
-                                        <div className="avatar-gradient">
-                                            <User className="avatar-icon" />
-                                        </div>
-                                        <div className="status-indicator"></div>
+                                        <User size={16} />
                                     </div>
                                     <div className="mobile-user-details">
                                         <span className="mobile-user-name">{user?.userName || "Usuario"}</span>
@@ -165,37 +141,37 @@ const Header = () => {
                                 </div>
 
                                 <button onClick={() => handleNavigation("/perfil")} className="mobile-nav-link">
-                                    <User className="nav-icon" />
+                                    <User size={16} />
                                     Mi Perfil
                                 </button>
 
                                 <button onClick={() => handleNavigation("/mis-boletos")} className="mobile-nav-link">
-                                    <Ticket className="nav-icon" />
+                                    <Ticket size={16} />
                                     Mis Boletos
                                 </button>
 
                                 {isAdmin() && (
                                     <>
                                         <button onClick={() => handleNavigation("/crear-evento")} className="mobile-nav-link">
-                                            <Calendar className="nav-icon" />
+                                            <Calendar size={16} />
                                             Crear Evento
                                         </button>
 
                                         <button onClick={() => handleNavigation("/usuarios")} className="mobile-nav-link">
-                                            <Users className="nav-icon" />
+                                            <Users size={16} />
                                             Usuarios
                                         </button>
                                     </>
                                 )}
 
                                 <button onClick={handleLogout} className="mobile-nav-link logout">
-                                    <LogOut className="nav-icon" />
+                                    <LogOut size={16} />
                                     Cerrar Sesión
                                 </button>
                             </>
                         ) : (
                             <div className="mobile-auth-buttons">
-                                <Link to="/login" className="btn btn-secondary" onClick={closeMenu}>
+                                <Link to="/login" className="btn btn-outline" onClick={closeMenu}>
                                     Iniciar Sesión
                                 </Link>
                                 <Link to="/register" className="btn btn-primary" onClick={closeMenu}>

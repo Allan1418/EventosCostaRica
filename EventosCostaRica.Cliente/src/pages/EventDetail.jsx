@@ -3,26 +3,17 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useRoles } from "../hooks/useRoles"
 import { eventService, getErrorMessage } from "../services/api"
 import SeatMatrix from "../components/Events/SeatMatrix"
-import {
-    Calendar,
-    MapPin,
-    Users,
-    ArrowLeft,
-    ShoppingCart,
-    AlertCircle,
-    Loader2,
-    Info,
-    Star,
-    Ticket,
-} from "lucide-react"
+import { Calendar, MapPin, Users, ArrowLeft, ShoppingCart, AlertCircle, Loader2, Info, Ticket } from "lucide-react"
 import "./EventDetail.css"
 
 const EventDetail = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const { isAuthenticated } = useAuth()
+    const { hasRole } = useRoles()
 
     const [event, setEvent] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -60,7 +51,6 @@ const EventDetail = () => {
             return
         }
 
-        // Navegar a la página de compra con los asientos seleccionados
         navigate(`/comprar-boleto/${id}`, {
             state: { selectedSeats },
         })
@@ -91,7 +81,8 @@ const EventDetail = () => {
     }
 
     const getEventStatus = () => {
-        if (!event?.eventoDate) return { status: "unknown", label: "Sin fecha", color: "#6b7280" }
+        if (!event?.eventoDate)
+            return { status: "unknown", label: "Sin fecha", className: "status-badge bg-gray-100 text-gray-600" }
 
         const now = new Date()
         const eventDate = new Date(event.eventoDate)
@@ -99,35 +90,36 @@ const EventDetail = () => {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
         if (diffDays < 0) {
-            return { status: "past", label: "Finalizado", color: "#6b7280" }
+            return { status: "past", label: "Finalizado", className: "status-badge bg-gray-100 text-gray-600" }
         } else if (diffDays === 0) {
-            return { status: "today", label: "¡Hoy!", color: "#ef4444" }
+            return { status: "today", label: "¡Hoy!", className: "status-badge bg-red-100 text-red-700" }
         } else if (diffDays <= 7) {
-            return { status: "soon", label: `En ${diffDays} día${diffDays > 1 ? "s" : ""}`, color: "#f59e0b" }
+            return {
+                status: "soon",
+                label: `En ${diffDays} día${diffDays > 1 ? "s" : ""}`,
+                className: "status-badge bg-yellow-100 text-yellow-700",
+            }
         } else {
-            return { status: "upcoming", label: "Próximo", color: "#10b981" }
+            return { status: "upcoming", label: "Próximo", className: "status-badge bg-green-100 text-green-700" }
         }
-    }
-
-    const getEventColor = () => {
-        const colors = [
-            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-            "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-            "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-        ]
-        const index = (event?.id || 0) % colors.length
-        return colors[index]
     }
 
     if (loading) {
         return (
-            <div className="event-detail-container">
-                <div className="event-detail-loading">
-                    <Loader2 size={64} className="animate-spin loading-icon" />
-                    <h3>Cargando detalles del evento</h3>
-                    <p>Preparando toda la información para ti...</p>
+            <div className="event-detail-page">
+                <div className="event-detail-content">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
+                        <div style={{ textAlign: "center" }}>
+                            <Loader2
+                                className="animate-spin"
+                                style={{ width: "48px", height: "48px", color: "#3b82f6", margin: "0 auto 16px" }}
+                            />
+                            <h3 style={{ fontSize: "1.25rem", fontWeight: "600", color: "#1e293b", margin: "0 0 8px 0" }}>
+                                Cargando evento
+                            </h3>
+                            <p style={{ color: "#64748b", margin: "0" }}>Preparando información...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
@@ -135,185 +127,272 @@ const EventDetail = () => {
 
     if (error || !event) {
         return (
-            <div className="event-detail-container">
-                <div className="event-detail-error">
-                    <AlertCircle size={64} className="error-icon" />
-                    <h2>Error al cargar el evento</h2>
-                    <p>{error || "No se pudo encontrar el evento solicitado"}</p>
-                    <div className="error-actions">
-                        <button onClick={() => navigate(-1)} className="btn btn-secondary">
-                            <ArrowLeft size={16} />
-                            Volver
-                        </button>
-                        <button onClick={loadEventDetails} className="btn btn-primary">
-                            Reintentar
-                        </button>
+            <div className="event-detail-page">
+                <div className="event-detail-content">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
+                        <div
+                            style={{
+                                background: "white",
+                                padding: "32px",
+                                borderRadius: "12px",
+                                textAlign: "center",
+                                maxWidth: "400px",
+                                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                            }}
+                        >
+                            <AlertCircle style={{ width: "48px", height: "48px", color: "#ef4444", margin: "0 auto 16px" }} />
+                            <h2 style={{ fontSize: "1.5rem", fontWeight: "700", color: "#1e293b", margin: "0 0 8px 0" }}>
+                                Error al cargar
+                            </h2>
+                            <p style={{ color: "#64748b", margin: "0 0 24px 0" }}>{error || "Evento no encontrado"}</p>
+                            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                                <button onClick={() => navigate(-1)} className="back-button">
+                                    <ArrowLeft style={{ width: "16px", height: "16px" }} />
+                                    Volver
+                                </button>
+                                <button
+                                    onClick={loadEventDetails}
+                                    style={{
+                                        padding: "12px 20px",
+                                        background: "#3b82f6",
+                                        color: "white",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Reintentar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         )
     }
 
-    // Aplicar la nueva fórmula (x+1) * (y+1)
     const totalCapacity = ((event.rows || 10) + 1) * ((event.seatsPerRow || 15) + 1)
     const eventStatus = getEventStatus()
 
     return (
-        <div className="event-detail-container">
-            {/* Header */}
-            <div className="event-detail-header">
-                <button onClick={() => navigate(-1)} className="back-btn">
-                    <ArrowLeft size={20} />
+        <div className="event-detail-page">
+            <div className="event-detail-content">
+                <button onClick={() => navigate(-1)} className="back-button">
+                    <ArrowLeft style={{ width: "16px", height: "16px" }} />
                     Volver
                 </button>
-            </div>
 
-            {/* Hero Section */}
-            <div className="event-hero-section">
-                <div className="hero-image-container">
-                    {event.bannerImageUrl ? (
-                        <img src={event.bannerImageUrl || "/placeholder.svg"} alt={event.name} className="hero-image" />
-                    ) : (
-                        <div className="hero-placeholder" style={{ background: getEventColor() }}>
-                            <Calendar size={64} />
-                            <span>Evento</span>
+                <div className="event-header-container">
+                    <div className="event-header">
+                        <div className="event-image">
+                            {event.bannerImageUrl ? (
+                                <img src={event.bannerImageUrl || "/placeholder.svg"} alt={event.name} />
+                            ) : (
+                                <div className="image-placeholder">
+                                    <Calendar style={{ width: "48px", height: "48px" }} />
+                                    <span>Sin imagen</span>
+                                </div>
+                            )}
+                            <div className={eventStatus.className}>{eventStatus.label}</div>
                         </div>
-                    )}
-                    <div className="hero-overlay">
-                        <div className="hero-content">
-                            <div className="event-status-badge" style={{ backgroundColor: eventStatus.color }}>
-                                {eventStatus.label}
-                            </div>
-                            <h1 className="hero-title">{event.name || "Evento sin nombre"}</h1>
-                            <p className="hero-description">{event.descrp || event.description || "Sin descripción disponible"}</p>
-                            <div className="hero-rating">
-                                <Star size={20} fill="currentColor" />
-                                <span>4.8</span>
-                                <span className="rating-count">(124 reseñas)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Event Info Cards */}
-            <div className="event-info-grid">
-                <div className="info-card primary">
-                    <div className="card-icon">
-                        <Calendar size={24} />
-                    </div>
-                    <div className="card-content">
-                        <h3>Fecha y Hora</h3>
-                        <p className="primary-text">{formatDate(event.eventoDate)}</p>
-                        <p className="secondary-text">{formatTime(event.eventoDate)}</p>
-                    </div>
-                </div>
-
-                <div className="info-card">
-                    <div className="card-icon">
-                        <MapPin size={24} />
-                    </div>
-                    <div className="card-content">
-                        <h3>Ubicación</h3>
-                        <p className="primary-text">{event.location || "Sin ubicación"}</p>
-                        <p className="secondary-text">Ver en mapa</p>
-                    </div>
-                </div>
-
-                <div className="info-card">
-                    <div className="card-icon">
-                        <Users size={24} />
-                    </div>
-                    <div className="card-content">
-                        <h3>Capacidad</h3>
-                        <p className="primary-text">{totalCapacity} asientos</p>
-                    </div>
-                </div>
-
-                <div className="info-card">
-                    <div className="card-icon">
-                        <Ticket size={24} />
-                    </div>
-                    <div className="card-content">
-                        <h3>Precio</h3>
-                        <p className="primary-text">₡15,000</p>
-                        <p className="secondary-text">Por asiento</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Seat Selection */}
-            {isAuthenticated ? (
-                <div className="seat-selection-section">
-                    <div className="section-header">
-                        <h2>Selecciona tus asientos</h2>
-                        <p>Elige los mejores asientos para disfrutar del evento</p>
-                    </div>
-
-                    <SeatMatrix
-                        eventoId={id}
-                        onSeatSelect={handleSeatSelect}
-                        selectedSeats={selectedSeats}
-                        isAdminMode={false}
-                        isEditing={false}
-                    />
-
-                    {selectedSeats.length > 0 && (
-                        <div className="purchase-summary">
-                            <div className="summary-header">
-                                <h3>Resumen de Compra</h3>
-                                <div className="selected-count">{selectedSeats.length} asientos seleccionados</div>
+                        <div className="event-info">
+                            <div className="event-title-section">
+                                <h1>{event.name || "Evento sin nombre"}</h1>
+                                <div className="event-meta">
+                                    <span className="event-category">Evento Cultural</span>
+                                    <span className="event-organizer">Organizado por EventosCR</span>
+                                </div>
                             </div>
 
-                            <div className="selected-seats-grid">
-                                {selectedSeats.map((seat, index) => (
-                                    <div key={index} className="seat-chip">
-                                        <span className="seat-position">
-                                            Fila {seat.row + 1}, Asiento {seat.column + 1}
-                                        </span>
+                            <p className="event-description">{event.descrp || event.description || "Sin descripción disponible"}</p>
+
+                            <div className="event-details-grid">
+                                <div className="detail-card">
+                                    <div className="detail-icon">
+                                        <Calendar style={{ width: "20px", height: "20px" }} />
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="detail-content">
+                                        <div className="detail-label">Fecha y Hora</div>
+                                        <div className="detail-value">
+                                            {formatDate(event.eventoDate)} - {formatTime(event.eventoDate)}
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <div className="price-breakdown">
-                                <div className="price-line">
-                                    <span>Precio por asiento:</span>
-                                    <span>₡15,000</span>
+                                <div className="detail-card">
+                                    <div className="detail-icon">
+                                        <MapPin style={{ width: "20px", height: "20px" }} />
+                                    </div>
+                                    <div className="detail-content">
+                                        <div className="detail-label">Ubicación</div>
+                                        <div className="detail-value">{event.location || "Sin ubicación"}</div>
+                                    </div>
                                 </div>
-                                <div className="price-line">
-                                    <span>Cantidad:</span>
-                                    <span>{selectedSeats.length}</span>
+
+                                <div className="detail-card">
+                                    <div className="detail-icon">
+                                        <Users style={{ width: "20px", height: "20px" }} />
+                                    </div>
+                                    <div className="detail-content">
+                                        <div className="detail-label">Capacidad</div>
+                                        <div className="detail-value">{totalCapacity} asientos</div>
+                                    </div>
                                 </div>
-                                <div className="price-line total">
-                                    <span>Total:</span>
-                                    <span>₡{(selectedSeats.length * 15000).toLocaleString()}</span>
+
+                                <div className="detail-card">
+                                    <div className="detail-icon">
+                                        <Ticket style={{ width: "20px", height: "20px" }} />
+                                    </div>
+                                    <div className="detail-content">
+                                        <div className="detail-label">Precio</div>
+                                        <div className="detail-value">₡15,000</div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <button onClick={handlePurchase} className="purchase-btn">
-                                <ShoppingCart size={20} />
-                                Comprar Boletos
-                            </button>
                         </div>
-                    )}
+                    </div>
                 </div>
-            ) : (
-                <div className="login-prompt">
-                    <div className="prompt-content">
-                        <Info size={48} className="prompt-icon" />
-                        <h3>Inicia sesión para comprar boletos</h3>
-                        <p>Necesitas una cuenta para seleccionar asientos y comprar boletos para este evento</p>
-                        <div className="prompt-actions">
-                            <button onClick={() => navigate("/login")} className="btn btn-primary">
+
+                {isAuthenticated ? (
+                    <div className="seat-selection-layout">
+                        {/* Matrix Section */}
+                        <div className="matrix-section">
+                            <div className="matrix-header">
+                                <div className="matrix-title">
+                                    <h3>Selección de Asientos</h3>
+                                    <div className="matrix-subtitle">
+                                        <Info style={{ width: "16px", height: "16px" }} />
+                                        <span>Haz clic en los asientos disponibles para seleccionarlos</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="matrix-wrapper">
+                                <SeatMatrix
+                                    eventoId={id}
+                                    onSeatSelect={handleSeatSelect}
+                                    selectedSeats={selectedSeats}
+                                    isAdminMode={hasRole("ADMIN")}
+                                    isEditing={false}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Purchase Section */}
+                        <div className="purchase-section">
+                            <div className="purchase-card">
+                                <div className="card-header">
+                                    <div className="card-title">
+                                        <h3>Resumen de Compra</h3>
+                                        <div className="card-subtitle">Revisa tu selección</div>
+                                    </div>
+                                    {selectedSeats.length > 0 && (
+                                        <div className="selected-count">
+                                            <span>{selectedSeats.length}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="card-content">
+                                    {selectedSeats.length > 0 ? (
+                                        <>
+                                            <div className="selected-seats">
+                                                {selectedSeats.map((seat, index) => (
+                                                    <div key={index} className="seat-item">
+                                                        <div className="seat-number">{(seat.row + 1) * (seat.column + 1)}</div>
+                                                        <div className="seat-info">
+                                                            <div className="seat-position">
+                                                                Fila {seat.row + 1}, Columna {seat.column + 1}
+                                                            </div>
+                                                            <div className="seat-price">₡15,000</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="price-summary">
+                                                <div className="price-line">
+                                                    <span>Cantidad:</span>
+                                                    <span>
+                                                        {selectedSeats.length} asiento{selectedSeats.length > 1 ? "s" : ""}
+                                                    </span>
+                                                </div>
+                                                <div className="price-line">
+                                                    <span>Precio unitario:</span>
+                                                    <span>₡15,000</span>
+                                                </div>
+                                                <div className="price-line total">
+                                                    <span>Total:</span>
+                                                    <span>₡{(selectedSeats.length * 15000).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+
+                                            <button onClick={handlePurchase} className="purchase-button">
+                                                <ShoppingCart style={{ width: "16px", height: "16px" }} />
+                                                Comprar Boletos
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="empty-state">
+                                            <div className="empty-icon">
+                                                <Ticket style={{ width: "48px", height: "48px" }} />
+                                            </div>
+                                            <h4>Selecciona asientos</h4>
+                                            <p>Haz clic en los asientos disponibles para comenzar tu compra</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div
+                        style={{
+                            background: "white",
+                            padding: "32px",
+                            borderRadius: "12px",
+                            textAlign: "center",
+                            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                        }}
+                    >
+                        <Info style={{ width: "48px", height: "48px", color: "#3b82f6", margin: "0 auto 16px" }} />
+                        <h3 style={{ fontSize: "1.25rem", fontWeight: "600", color: "#1e293b", margin: "0 0 8px 0" }}>
+                            Inicia sesión para comprar
+                        </h3>
+                        <p style={{ color: "#64748b", margin: "0 0 24px 0" }}>Necesitas una cuenta para comprar boletos</p>
+                        <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                            <button
+                                onClick={() => navigate("/login")}
+                                style={{
+                                    padding: "12px 24px",
+                                    background: "#3b82f6",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    fontWeight: "500",
+                                    cursor: "pointer",
+                                }}
+                            >
                                 Iniciar Sesión
                             </button>
-                            <button onClick={() => navigate("/register")} className="btn btn-secondary">
+                            <button
+                                onClick={() => navigate("/register")}
+                                style={{
+                                    padding: "12px 24px",
+                                    background: "#f8fafc",
+                                    color: "#64748b",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                    fontWeight: "500",
+                                    cursor: "pointer",
+                                }}
+                            >
                                 Crear Cuenta
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     )
 }

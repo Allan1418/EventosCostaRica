@@ -26,12 +26,9 @@ export const AuthProvider = ({ children }) => {
         try {
             const token = localStorage.getItem("authToken")
 
-            console.log("[v0] AuthContext - Token from localStorage:", token ? "exists" : "not found")
-
             if (token) {
                 try {
                     const profileData = await authService.getProfile()
-                    console.log("[v0] AuthContext - Profile data from API:", profileData)
 
                     if (profileData) {
                         const normalizedUser = {
@@ -41,25 +38,17 @@ export const AuthProvider = ({ children }) => {
                             roles: normalizeRoles(profileData.roles || profileData.role),
                         }
 
-                        console.log("[v0] AuthContext - Normalized user from API:", normalizedUser)
-
-                        // Actualizar localStorage con datos frescos de la API
                         localStorage.setItem("userData", JSON.stringify(normalizedUser))
                         setUser(normalizedUser)
                         setIsAuthenticated(true)
                     } else {
-                        // Si no hay datos del perfil, limpiar autenticación
                         logout()
                     }
                 } catch (apiError) {
-                    console.error("[v0] AuthContext - Error getting profile from API:", apiError)
-
-                    // Si falla la API, intentar con datos de localStorage como fallback
                     const userData = localStorage.getItem("userData")
                     if (userData) {
                         try {
                             const parsedUser = JSON.parse(userData)
-                            console.log("[v0] AuthContext - Fallback to localStorage data:", parsedUser)
 
                             const normalizedUser = {
                                 id: parsedUser.id,
@@ -71,7 +60,6 @@ export const AuthProvider = ({ children }) => {
                             setUser(normalizedUser)
                             setIsAuthenticated(true)
                         } catch (parseError) {
-                            console.error("[v0] AuthContext - Error parsing localStorage data:", parseError)
                             logout()
                         }
                     } else {
@@ -112,9 +100,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            console.log("Attempting login with:", { email, password: "***" })
             const response = await authService.login(email, password)
-            console.log("Login response:", response)
 
             if (response && (response.token || response.user)) {
                 const token = response.token || response.accessToken
@@ -136,12 +122,8 @@ export const AuthProvider = ({ children }) => {
                         setUser(normalizedUser)
                         setIsAuthenticated(true)
 
-                        console.log("[v0] AuthContext - User logged in with fresh profile data:", normalizedUser)
                         return { success: true, message: response.message || "Login exitoso" }
                     } catch (profileError) {
-                        console.error("[v0] AuthContext - Error getting profile after login:", profileError)
-
-                        // Fallback a datos del login si falla el perfil
                         const normalizedUser = {
                             id: userData.id,
                             userName: userData.userName,
@@ -242,25 +224,20 @@ export const AuthProvider = ({ children }) => {
     const normalizeRoles = (rolesData) => {
         if (!rolesData) return ["USER"]
 
-        // Si ya es un array, verificar que no esté vacío
         if (Array.isArray(rolesData)) {
             return rolesData.length > 0 ? rolesData : ["USER"]
         }
 
-        // Si es un string, convertir a array
         if (typeof rolesData === "string") {
             return [rolesData]
         }
 
-        // Si es un objeto con propiedades de rol
         if (typeof rolesData === "object") {
-            // Buscar propiedades comunes de rol
             if (rolesData.name) return [rolesData.name]
             if (rolesData.roleName) return [rolesData.roleName]
             if (rolesData.role) return [rolesData.role]
         }
 
-        // Fallback por defecto
         return ["USER"]
     }
 
